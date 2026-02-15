@@ -8,6 +8,7 @@ import {
   Post,
   Req,
   UseGuards,
+  UseInterceptors,
   UsePipes,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -23,8 +24,11 @@ import {
 } from './dto/createUser.dto';
 import { ZodPipe } from 'src/common/pipes/zod.pipe';
 import { AuthGuard } from 'src/common/guard/auth.guard';
+import { LoggingInterceptor } from 'src/common/interceptor/logger.interceptor';
+import { ResponseInterceptor } from 'src/common/interceptor/response.interceptor';
 
 // http://localhost:3000/auth/profile
+@UseInterceptors(LoggingInterceptor, ResponseInterceptor)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

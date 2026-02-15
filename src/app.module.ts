@@ -12,6 +12,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { PreAuthMiddleware } from './middleware/preAuth.middleware';
+import { LoggerMiddleware } from './middleware/logger.middleware';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PreAuthMiddleware } from './middleware/preAuth.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
     consumer.apply(PreAuthMiddleware).exclude('auth/signup','auth/login').forRoutes('auth');
   }
 }
