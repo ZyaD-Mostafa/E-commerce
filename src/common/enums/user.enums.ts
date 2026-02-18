@@ -23,3 +23,18 @@ export const OtpEnum = {
   PASSWORD_RESET: 'PASSWORD_RESET',
   TWO_STEP_VERIFICATION: 'TWO_STEP_VERIFICATION',
 };
+
+export enum SignatureLeavels {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+}
+export enum TokenTypeEnum {
+  ACCESS = 'ACCESS',
+  REFRESH = 'REFRESH',
+}
+
+
+export enum LogOutEnum {
+  ONLY = 'ONLY',
+  ALL = 'ALL',
+}

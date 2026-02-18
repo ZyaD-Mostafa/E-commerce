@@ -6,9 +6,15 @@ import {
   Virtual,
 } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
-import { GenderEnum, ProviderEnum } from 'src/common/enums/user.enums';
+import {
+  GenderEnum,
+  ProviderEnum,
+  UserRoleEnum,
+} from 'src/common/enums/user.enums';
 import { hash } from 'src/common/utils/hashing/hash';
 import { HOtpDocument } from './otp.model';
+import { object, string } from 'zod';
+import slugify from 'slugify';
 
 @Schema({
   timestamps: true,
@@ -30,7 +36,7 @@ export class User {
     trim: true,
   })
   firstname: string;
-    @Prop({
+  @Prop({
     type: String,
     required: true,
     minlength: 3,
@@ -92,7 +98,40 @@ export class User {
     default: ProviderEnum.SYSTEM,
   })
   provider: string;
+  @Prop({
+    type: String,
+    required: true,
+    enum: {
+      values: Object.values(UserRoleEnum),
+      message: '{VALUE} role must be USER or ADMIN',
+    },
+    default: UserRoleEnum.USER,
+  })
+  role: UserRoleEnum;
 
+  @Prop({
+    type: Date,
+  })
+  changeCredintaialstime: Date;
+  @Prop({
+    type: String,
+  })
+  slug: string;
+
+  @Prop({
+    type: object,
+  })
+  profileImage: {
+    secure_url?: string;
+    public_id?: string;
+  };
+  @Prop({
+    type: [object],
+  })
+  coverImage: {
+    secure_url?: string;
+    public_id?: string;
+  }[];
   @Virtual()
   otp: HOtpDocument[];
 }
@@ -104,10 +143,16 @@ userSchema.virtual('otp', {
   localField: '_id',
   foreignField: 'createdBy',
 });
+
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
     this.password = await hash(this.password);
   }
+});
+
+userSchema.pre('save', async function (next) {
+  if (this.isModified('firstname') || this.isModified('lastname'))
+    this.slug = slugify(this.firstname + ' ' + this.lastname, { lower: true });
 });
 
 export type HUserDocument = HydratedDocument<User>;

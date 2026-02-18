@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,6 +8,8 @@ import {
   Patch,
   Post,
   Req,
+  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
   UsePipes,
@@ -22,10 +25,10 @@ import {
   type ResendOtpDto,
   resendOtpSchema,
 } from './dto/createUser.dto';
-import { ZodPipe } from 'src/common/pipes/zod.pipe';
-import { AuthGuard } from 'src/common/guard/auth.guard';
 import { LoggingInterceptor } from 'src/common/interceptor/logger.interceptor';
 import { ResponseInterceptor } from 'src/common/interceptor/response.interceptor';
+
+import { ZodPipe } from 'src/common/pipes/zod.pipe';
 
 // http://localhost:3000/auth/profile
 @UseInterceptors(LoggingInterceptor, ResponseInterceptor)
@@ -59,11 +62,5 @@ export class AuthController {
     return this.authService.login(body);
   }
 
-  @Get('/profile')
-  //@HttpCode(200)
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard)
-  profile(@Req() req: Request) {
-    return this.authService.getProfile(req);
-  }
+  
 }

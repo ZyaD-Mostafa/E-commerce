@@ -9,13 +9,15 @@ import { ConfrimEmailDto, LoginDto, ResendOtpDto } from './dto/createUser.dto';
 import { compareHash } from 'src/common/utils/hashing/hash';
 import { randomUUID } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
+import { AppService } from 'src/app.service';
+import { TokenService } from 'src/Modules/token/token.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private readonly _userModel: Model<HUserDocument>,
     @InjectModel(Otp.name) private readonly _otpModel: Model<HOtpDocument>,
-    private readonly _JwtService: JwtService,
+    private readonly _tokenService: TokenService,
   ) {}
 
   // function create otp
@@ -110,25 +112,17 @@ export class AuthService {
     }
 
     // genrateToken
-    const jwtid = randomUUID();
-    const accessToken = this._JwtService.sign(
-      { id: user._id, email: user.email },
-      {
-        expiresIn: Number(process.env.JWT_EXPIRES_IN),
-        jwtid,
-        secret: process.env.JWT_SECRET,
-      },
-    );
+    const token = await this._tokenService.createToken({
+      payload: { id: user._id, email: user.email },
+      role: user.role,
+    });
+
     return {
       message: 'User logged in successfully',
-      accessToken,
+      token,
     };
   }
 
-  async getProfile(req: any) {
-    return{
-      message: 'User profile',
-      user: req.user,
-    };
-  }
+ 
+  
 }

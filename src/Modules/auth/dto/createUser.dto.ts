@@ -1,13 +1,14 @@
 import { GenderEnum, ProviderEnum } from 'src/common/enums/user.enums';
 import { z } from 'zod';
+import { generakField } from 'src/common/utils/generalField.utils';
 
 export const creteUserSchema = z
   .object({
-    firstname: z.string().min(3).max(50),
-    lastname: z.string().min(3).max(50),
-    email: z.email(),
-    password: z.string(),
-    confirmPassword: z.string(),
+    firstname: generakField.firstname,
+    lastname: generakField.lastname,
+    email: generakField.email,
+    password: generakField.password,
+    confirmPassword: generakField.confirmPassword,
     gender: z.enum(GenderEnum).optional(),
     provider: z.enum(ProviderEnum).optional(),
   })
@@ -17,15 +18,15 @@ export const creteUserSchema = z
   });
 
 export const resendOtpSchema = z.strictObject({
-  email: z.email(),
+  email: generakField.email,
 });
 export const confrimEmailSchema = z.strictObject({
-  email: z.email(),
-  code: z.string().length(6),
+  email: generakField.email,
+  code: generakField.otp,
 });
 export const loginSchema = z.strictObject({
-  email: z.email(),
-  password: z.string(),
+  email: generakField.email,
+  password: generakField.password,
 });
 
 export type CreateUserDto = z.infer<typeof creteUserSchema>;
