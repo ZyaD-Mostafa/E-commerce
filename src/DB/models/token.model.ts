@@ -1,5 +1,6 @@
 import { MongooseModule, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { User } from './user.model';
 
 @Schema({
   timestamps: true,
@@ -21,7 +22,7 @@ export class Token {
   @Prop({
     type: Types.ObjectId,
     required: true,
-    ref: 'User',
+    ref: User.name,
   })
   userId: Types.ObjectId;
 

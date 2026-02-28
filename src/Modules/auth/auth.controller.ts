@@ -26,12 +26,11 @@ import {
   resendOtpSchema,
 } from './dto/createUser.dto';
 import { LoggingInterceptor } from 'src/common/interceptor/logger.interceptor';
-import { ResponseInterceptor } from 'src/common/interceptor/response.interceptor';
 
 import { ZodPipe } from 'src/common/pipes/zod.pipe';
 
 // http://localhost:3000/auth/profile
-@UseInterceptors(LoggingInterceptor, ResponseInterceptor)
+@UseInterceptors(LoggingInterceptor)
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

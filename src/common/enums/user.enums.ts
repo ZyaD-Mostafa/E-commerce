@@ -33,8 +33,22 @@ export enum TokenTypeEnum {
   REFRESH = 'REFRESH',
 }
 
-
 export enum LogOutEnum {
   ONLY = 'ONLY',
   ALL = 'ALL',
+}
+
+export enum OrderStatusEnum {
+  PLACED = 'placed',
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  SHIPPED = 'shipped',
+  DELIVERED = 'delivered',
+  CANCELLED = 'cancelled',
+  REFUNDED = 'refunded',
+  RETURNED = 'returned',
+}
+export enum paymentMethodEnum {
+  CASH = 'CASH',
+  CARD = 'CARD',
 }

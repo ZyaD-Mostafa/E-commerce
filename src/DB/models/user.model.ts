@@ -119,7 +119,7 @@ export class User {
   slug: string;
 
   @Prop({
-    type: object,
+    type: Object,
   })
   profileImage: {
     secure_url?: string;

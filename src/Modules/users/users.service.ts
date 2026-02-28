@@ -25,7 +25,7 @@ export class UsersService {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
-    const oldPublicId = req.user.profileImage?.publicId;
+    const oldPublicId = req.user.profileImage?.public_id;
 
     const { secure_url, public_id } = await cloudinaryConfig().uploader.upload(
       file.path,
@@ -44,6 +44,7 @@ export class UsersService {
         },
       },
     );
+
     if (oldPublicId) {
       await cloudinaryConfig().uploader.destroy(oldPublicId);
     }
@@ -52,42 +53,44 @@ export class UsersService {
       user,
     };
   }
+  
 
- async uploadFiles(files: Array<Express.Multer.File[]>, req: any) {
-  if (!files || !req.files || req.files.length === 0) {
-    throw new BadRequestException('No files uploaded');
-  }
-
-  const attachments: { public_id: string; secure_url: string }[] = [];
-  const oldImages: { public_id?: string; secure_url?: string }[] = req.user.coverImage || [];
-
-  // رفع الملفات الجديدة
-  for (const file of req.files) {
-    const { public_id, secure_url } = await cloudinaryConfig().uploader.upload(file.path, {
-      folder: `Sara7aApp/Users/${req.user._id}`,
-    });
-    attachments.push({ public_id, secure_url });
-  }
-
-  // مسح الصور القديمة لو موجودة
-  for (const old of oldImages) {
-    if (old.public_id) {
-      await cloudinaryConfig().uploader.destroy(old.public_id);
+  async uploadFiles(files: Array<Express.Multer.File[]>, req: any) {
+    if (!files || !req.files || req.files.length === 0) {
+      throw new BadRequestException('No files uploaded');
     }
+
+    const attachments: { public_id: string; secure_url: string }[] = [];
+    const oldImages: { public_id?: string; secure_url?: string }[] =
+      req.user.coverImage || [];
+
+    // رفع الملفات الجديدة
+    for (const file of req.files) {
+      const { public_id, secure_url } =
+        await cloudinaryConfig().uploader.upload(file.path, {
+          folder: `Sara7aApp/Users/${req.user._id}`,
+        });
+      attachments.push({ public_id, secure_url });
+    }
+
+    // مسح الصور القديمة لو موجودة
+    for (const old of oldImages) {
+      if (old.public_id) {
+        await cloudinaryConfig().uploader.destroy(old.public_id);
+      }
+    }
+
+    // تحديث الـ DB
+    const user = await this._userModel.updateOne(
+      { _id: req.user._id },
+      { $set: { coverImage: attachments } },
+    );
+
+    return {
+      message: 'Files uploaded successfully',
+      user,
+    };
   }
-
-  // تحديث الـ DB
-  const user = await this._userModel.updateOne(
-    { _id: req.user._id },
-    { $set: { coverImage: attachments } }
-  );
-
-  return {
-    message: 'Files uploaded successfully',
-    user,
-  };
-}
-
 
   async logout(body: LogOutDto, req: any) {
     const { flag } = body;

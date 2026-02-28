@@ -1,6 +1,7 @@
 import { MongooseModule, Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import slugify from 'slugify';
-import mongoose, { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
+import { Brand } from './brand.model';
 
 @Schema({
   timestamps: true,
@@ -18,7 +19,7 @@ export class Category {
     type: String,
     required: true,
     unique: true,
-    minLength: 3,
+    minLength: 2,
     maxLength: 20,
   })
   name: string;
@@ -30,30 +31,31 @@ export class Category {
   createdBy: Types.ObjectId;
 
   @Prop({
-    type: String,
+    type: Object,
     required: true,
   })
-  image: string;
+  image: {
+    secure_url?: string;
+    public_id?: string;
+  };
 
   @Prop({
     type: String,
     unique: true,
-    minLength: 3,
+    minLength: 2,
     maxLength: 20,
   })
   slug: string;
   @Prop({
     type: String,
     minlength: 10,
-    maxlength: 1000,
+    maxlength: 5000,
   })
   description: string;
 
   @Prop({
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Brand' }],
-    ref: 'Brand',
+    type: [{ type: Types.ObjectId, ref: Brand.name }],
   })
-  
   brands: Types.ObjectId[];
 }
 

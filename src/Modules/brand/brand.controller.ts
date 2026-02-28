@@ -1,37 +1,52 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, ValidationPipe, UploadedFile } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseInterceptors,
+  ValidationPipe,
+  UploadedFile,
+  UseGuards,
+  Req,
+  UploadedFiles,
+} from '@nestjs/common';
 import { BrandService } from './brand.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { Types } from 'mongoose';
+import { AuthGuard } from 'src/common/guard/auth.guard';
+import { AccessRoleGuard } from 'src/common/guard/accessRole.guard';
+import { Roles } from 'src/common/decorator/role.decorator';
+import { UserRoleEnum } from 'src/common/enums/user.enums';
+import {
+  cloudFileUploadMulter,
+  fileValidation,
+} from 'src/common/multer/cloud.multer';
+import { MagicNumberInterceptor } from 'src/common/interceptor/magicNumber.Interceptor';
 
+@UseGuards(AuthGuard, AccessRoleGuard)
+@Roles([UserRoleEnum.ADMIN])
 @Controller('brand')
 export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file' , {
-        storage: diskStorage({
-          destination: './src/uploads',
-          filename: (req, file, callback) => {
-            const uniquesuffix =
-              Date.now() + '-' + Math.round(Math.random() * 1e9);
-            const ext = extname(file.originalname);
-            const filename = `${file.fieldname}-${uniquesuffix}${ext}`;
-            callback(null, filename);
-          },
-        }),
-      }
-    ))
-  create(@Body(new ValidationPipe()) name: string , @Body("createdBy" , new ValidationPipe()) createdBy: Types.ObjectId , @UploadedFile() file: Express.Multer.File) { //run class validator
-    const createBrandDto:CreateBrandDto = {
-      name,
-      createdBy,
-      image: file.filename
-    }
-    return this.brandService.create(createBrandDto);
+  @UseInterceptors(
+    FileInterceptor('file', cloudFileUploadMulter('images')),
+    MagicNumberInterceptor([...fileValidation.images]),
+  )
+  create(
+    @Body(new ValidationPipe()) createBrandDto: CreateBrandDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request,
+  ) {
+    return this.brandService.create(createBrandDto, req, file);
   }
 
   @Get()
@@ -41,16 +56,26 @@ export class BrandController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.brandService.findOne(+id);
+    return this.brandService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBrandDto: UpdateBrandDto) {
-    return this.brandService.update(+id, updateBrandDto);
+  @UseInterceptors(
+    FileInterceptor('file', cloudFileUploadMulter('images')),
+    MagicNumberInterceptor([...fileValidation.images]),
+  )
+  update(
+    @Param('id') id: string,
+    @Body() updateBrandDto: UpdateBrandDto,
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const _id = new Types.ObjectId(id);
+    return this.brandService.update(_id, updateBrandDto, req, file);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.brandService.remove(+id);
+    return this.brandService.remove(id);
   }
 }

@@ -15,12 +15,9 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { LoggingInterceptor } from 'src/common/interceptor/logger.interceptor';
-import { ResponseInterceptor } from 'src/common/interceptor/response.interceptor';
 import { AuthGuard } from 'src/common/guard/auth.guard';
 import { UsersService } from './users.service';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import {
   type LogOutDto,
   logOutSchema,
@@ -33,17 +30,19 @@ import {
   fileValidation,
 } from 'src/common/multer/cloud.multer';
 import { MagicNumberInterceptor } from 'src/common/interceptor/magicNumber.Interceptor';
+import { Roles } from 'src/common/decorator/role.decorator';
+import { AccessRoleGuard } from 'src/common/guard/accessRole.guard';
+import { UserRoleEnum } from 'src/common/enums/user.enums';
 
-@UseInterceptors(LoggingInterceptor, ResponseInterceptor)
-@UseGuards(AuthGuard)
 @Controller('user')
+@UseInterceptors(LoggingInterceptor)
+@Roles([UserRoleEnum.USER])
+@UseGuards(AuthGuard, AccessRoleGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
   @Get('/profile')
   //@HttpCode(200)
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard)
   profile(@Req() req: Request) {
     return this.usersService.getProfile(req);
   }
@@ -60,6 +59,8 @@ export class UsersController {
   ) {
     return await this.usersService.profileImage(file, req);
   }
+
+  
   @Patch('/upload-files')
   @UseInterceptors(
     FilesInterceptor('files', 5, cloudFileUploadMulter('images')),

@@ -7,19 +7,17 @@ import { AuthModule } from './Modules/auth/auth.module';
 import { UsersController } from './Modules/users/users.controller';
 import { UsersService } from './Modules/users/users.service';
 import { UsersModule } from './Modules/users/users.module';
-import { ProductsModule } from './Modules/products/products.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
-import { JwtService } from '@nestjs/jwt';
 import { PreAuthMiddleware } from './middleware/preAuth.middleware';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 import { BrandModule } from './Modules/brand/brand.module';
-import { BrandService } from './Modules/brand/brand.service';
-import { BrandController } from './Modules/brand/brand.controller';
 import { CategoryModule } from './Modules/category/category.module';
-import { TokenService } from './Modules/token/token.service';
 import { TokenModule } from './Modules/token/token.module';
-import { AuthGuard } from './common/guard/auth.guard';
+import { ProductModule } from './Modules/product/product.module';
+import { CartModule } from './Modules/cart/cart.module';
+import { CouponModule } from './Modules/coupon/coupon.module';
+import { OrderModule } from './Modules/order/order.module';
 
 @Module({
   imports: [
@@ -37,10 +35,13 @@ import { AuthGuard } from './common/guard/auth.guard';
     }),
     AuthModule,
     UsersModule,
-    ProductsModule,
+    ProductModule,
     BrandModule,
     CategoryModule,
     TokenModule,
+    CartModule,
+    CouponModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],

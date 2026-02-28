@@ -18,7 +18,7 @@ export class Brand {
     type: String,
     required: true,
     unique: true,
-    minLength: 3,
+    minLength: 2,
     maxLength: 20,
   })
   name: string;
@@ -30,18 +30,21 @@ export class Brand {
   createdBy: Types.ObjectId;
 
   @Prop({
-    type: String,
+    type: Object,
     required: true,
   })
-  image: string;
+  image: {
+    secure_url?: string;
+    public_id?: string;
+  };
 
   @Prop({
     type: String,
-    unique: true,
-    minLength: 3,
+    minLength: 2,
     maxLength: 20,
   })
   slug: string;
+
 }
 
 export const brandSchema = SchemaFactory.createForClass(Brand);

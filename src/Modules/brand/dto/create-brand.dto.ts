@@ -1,15 +1,8 @@
-import { IsMongoId, IsString, Length } from "class-validator";
-import { Types } from "mongoose";
-
+import { IsString, Length } from 'class-validator';
 export class CreateBrandDto {
-
-    @IsString()
-    @Length(3, 20)
-    name:string;
-    @IsString()
-    image:string;
-    @IsMongoId()
-    createdBy:Types.ObjectId;
+  @IsString()
+  @Length(2, 20)
+  name: string;
 }
 
 //class validator 
