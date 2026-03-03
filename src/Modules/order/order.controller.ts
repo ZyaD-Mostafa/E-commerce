@@ -41,7 +41,11 @@ export class OrderController {
 
 
   @Post('checkout/:orderId')
-  creatCheckOutSession(@Param('orderId') orderId: string, @Req() req: Request , user :HUserDocument) {
-    return this.orderService.createCheckOutSession(orderId, req , user );
+  creatCheckOutSession(@Param('orderId') orderId: string, @Req() req: Request ) {
+    return this.orderService.createCheckOutSession(orderId, req );
+  }
+  @Post('refund/:orderId')
+  refund(@Param('orderId') orderId: string, @Req() req: Request ) {
+    return this.orderService.refundOrder(orderId, req  );
   }
 }

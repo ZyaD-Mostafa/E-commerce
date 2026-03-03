@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,6 +15,7 @@ import {
 } from 'src/common/enums/user.enums';
 import { HUserDocument } from 'src/DB/models/user.model';
 import { PaymentService } from 'src/common/Services/payment/payment.service';
+import Stripe from 'stripe';
 
 @Injectable()
 export class OrderService {
@@ -72,7 +77,7 @@ export class OrderService {
     return order;
   }
 
-  async createCheckOutSession(orderId: string, req: any, user: HUserDocument) {
+  async createCheckOutSession(orderId: string, req: any) {
     const order = await this.orderModel
       .findOne({
         _id: new Types.ObjectId(orderId),
@@ -87,7 +92,7 @@ export class OrderService {
         paymentMethod: paymentMethodEnum.CARD,
       })
       .populate([{ path: 'user' }, { path: 'cart' }, { path: 'coupon' }]);
-    if (!order) throw new BadRequestException('Order not found');
+    if (!order) throw new NotFoundException('Order not found');
 
     // TODO: create checkout session
 
@@ -106,14 +111,70 @@ export class OrderService {
       },
     ];
 
+    let discounts: Stripe.Checkout.SessionCreateParams.Discount[] = [];
+    if (order.discount) {
+      const coupon = await this.paymentService.createCoupon({
+        duration: 'once',
+        currency: 'egp',
+        percent_off: order.discount,
+      });
+      discounts.push({
+        coupon: coupon.id,
+      });
+    }
+
     const session = await this.paymentService.checkOutSession({
       customer_email: (order.user as unknown as HUserDocument).email,
       line_items,
       mode: 'payment',
+      discounts,
       metadata: {
         orderId: order._id.toString(),
       },
     });
-    return session;
+
+    const method = await this.paymentService.createPaymentMethod({
+      type: 'card',
+      card: { token: 'tok_visa' },
+    });
+    const intent = await this.paymentService.createPaymentIntent({
+      amount: order.subTotal * 100,
+      currency: 'egp',
+      payment_method: method.id,
+      payment_method_types: ['card'],
+    });
+    order.intentId = intent.id;
+    await order.save();
+
+    await this.paymentService.confirmPaymentIntent(intent.id);
+    return session.url;
+  }
+
+  async refundOrder(orderId: string, req: any) {
+    const order = await this.orderModel.findOne({
+      _id: orderId,
+      user: req.user._id,
+      paymentMethod: paymentMethodEnum.CARD,
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    if (!order.intentId)
+      throw new BadRequestException('Order has no intent id');
+
+    const refund = await this.paymentService.createRefund(order.intentId);
+    await this.orderModel.findByIdAndUpdate(
+      order._id,
+      {
+        status: OrderStatusEnum.REFUNDED,
+        refundId: refund.id,
+        refundAt: new Date(),
+        $unset: { intentId: 1 },
+        $inc: { __v: 1 },
+      },
+      {
+        new: true,
+      },
+    );
+
+    return order;
   }
 }

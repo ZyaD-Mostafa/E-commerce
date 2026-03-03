@@ -46,7 +46,6 @@ export enum OrderStatusEnum {
   DELIVERED = 'delivered',
   CANCELLED = 'cancelled',
   REFUNDED = 'refunded',
-  RETURNED = 'returned',
 }
 export enum paymentMethodEnum {
   CASH = 'CASH',

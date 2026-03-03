@@ -90,6 +90,18 @@ export class Order {
     required: true,
   })
   phone: string;
+  @Prop({
+    type: String,
+  })
+  intentId: string;
+  @Prop({
+    type: String,
+  })
+  refundId: string;
+  @Prop({
+    type: Date,
+  })
+  refundAt: Date;
 }
 
 export const orderSchema = SchemaFactory.createForClass(Order);
