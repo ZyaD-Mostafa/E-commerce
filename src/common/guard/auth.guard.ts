@@ -21,16 +21,7 @@ export class AuthGuard implements CanActivate {
     // auth
     const authHeaders = request.headers.authorization;
     const [bearer, token] = authHeaders.split(' ');
-    const { decoded } = await this.tokenService.decodeToken(bearer, token);
-
-    const user = await this._userRepo.findById(decoded.id);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    if (!user.confirmEmail) {
-      throw new UnauthorizedException('User not confirmed');
-    }
-
+    const { user, decoded } = await this.tokenService.decodeToken(bearer, token);
     request.user = user;
     request.decoded = decoded;
 

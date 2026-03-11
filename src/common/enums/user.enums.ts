@@ -28,6 +28,7 @@ export const OtpEnum = {
 export enum SignatureLeavels {
   USER = 'USER',
   ADMIN = 'ADMIN',
+  VENDOR = 'VENDOR',
 }
 export enum TokenTypeEnum {
   ACCESS = 'ACCESS',

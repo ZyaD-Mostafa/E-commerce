@@ -42,6 +42,8 @@ export class TokenService {
         role = UserRoleEnum.ADMIN;
       } else if (bearer === 'USER') {
         role = UserRoleEnum.USER;
+      } else if (bearer === 'VENDOR') {
+        role = UserRoleEnum.VENDOR;
       } else {
         throw new UnauthorizedException('Invalid role in authorization header');
       }
@@ -51,13 +53,18 @@ export class TokenService {
       if (!decoded?.id || !decoded.iat)
         throw new UnauthorizedException('Invalid Token Payload');
 
-      if (await this._tokenRepository.findOne({ filter:{jti: decoded.jti }})) {
-        throw new UnauthorizedException('token is revoked ');
+      if (
+        await this._tokenRepository.findOne({ filter: { jti: decoded.jti } })
+      ) {
+        throw new UnauthorizedException('Token is revoked');
       }
 
-      const user = await this._userRepository.findById(decoded.id);
+      const user = await this._userRepository.findById({ id: decoded.id });
       if (!user) {
         throw new NotFoundException('User not found');
+      }
+      if (!user.confirmEmail) {
+        throw new UnauthorizedException('User not confirmed');
       }
       if ((user.changeCredintaialstime?.getTime() || 0) > decoded.iat * 1000) {
         throw new UnauthorizedException('logedOut from All devices');

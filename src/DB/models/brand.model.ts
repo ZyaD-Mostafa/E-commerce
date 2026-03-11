@@ -31,7 +31,6 @@ export class Brand {
 
   @Prop({
     type: Object,
-    required: true,
   })
   logo: {
     secure_url?: string;

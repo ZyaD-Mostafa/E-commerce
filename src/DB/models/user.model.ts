@@ -31,15 +31,14 @@ export class User {
   @Prop({
     type: String,
     required: true,
-    minlength: 3,
+    minlength: 2,
     maxlength: 50,
     trim: true,
   })
   firstname: string;
   @Prop({
     type: String,
-    required: true,
-    minlength: 3,
+    minlength: 2,
     maxlength: 50,
     trim: true,
   })
@@ -47,6 +46,7 @@ export class User {
 
   @Virtual({
     get: function () {
+      if (!this.lastname) return this.firstname;
       return this.firstname + ' ' + this.lastname;
     },
     set: function (value: string) {
@@ -55,6 +55,7 @@ export class User {
     },
   })
   username: string;
+
   @Prop({
     type: String,
     required: true,
@@ -119,7 +120,7 @@ export class User {
     type: String,
   })
   slug: string;
- 
+
   @Virtual()
   otp: HOtpDocument[];
 }
@@ -139,8 +140,15 @@ userSchema.pre('save', async function (next) {
 });
 
 userSchema.pre('save', async function (next) {
-  if (this.isModified('firstname') || this.isModified('lastname'))
-    this.slug = slugify(this.firstname + ' ' + this.lastname, { lower: true });
+  if (this.isModified('firstname') || this.isModified('lastname')) {
+    if (this.lastname)
+      this.slug = slugify(this.firstname + ' ' + this.lastname, {
+        lower: true,
+      });
+    else {
+      this.slug = slugify(this.firstname, { lower: true });
+    }
+  }
 });
 
 export type HUserDocument = HydratedDocument<User>;

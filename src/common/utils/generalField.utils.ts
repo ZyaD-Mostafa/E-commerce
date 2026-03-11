@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import { z } from 'zod';
 
-export const generakField = {
+export const generalField = {
   firstname: z.string().min(3).max(50),
   lastname: z.string().min(3).max(50),
   email: z.email(),

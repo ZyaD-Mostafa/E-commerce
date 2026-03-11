@@ -53,6 +53,6 @@ import { AdminModule } from './Modules/Admin/admin/admin.module';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
-    consumer.apply(PreAuthMiddleware).forRoutes('user');
+    consumer.apply(PreAuthMiddleware).forRoutes('user', 'admin');
   }
 }

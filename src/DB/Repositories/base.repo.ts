@@ -118,7 +118,7 @@ export abstract class BaseRepository<T extends Document> {
   }
 
   // -------------------- FIND BY ID --------------------
-  async findById({
+  async   findById({
     id,
     select,
     options,
