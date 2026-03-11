@@ -5,19 +5,18 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+
 import { UserRoleEnum } from 'src/common/enums/user.enums';
 import { getSignatureLevel } from 'src/common/token/token';
-import { Token } from 'src/DB/models/token.model';
-import { User } from 'src/DB/models/user.model';
+
+import { TokenRepository } from 'src/DB/Repositories/token.repo';
+import { UserRepository } from 'src/DB/Repositories/user.repo';
 import { v4 as uuid } from 'uuid';
-import be from 'zod/v4/locales/be.js';
 @Injectable()
 export class TokenService {
   constructor(
-    @InjectModel(Token.name) private readonly _tokenModel: Model<Token>,
-    @InjectModel(User.name) private readonly _userModel: Model<User>,
+    private readonly _userRepository: UserRepository,
+    private readonly _tokenRepository: TokenRepository,
     private readonly _JwtService: JwtService,
   ) {}
   async createToken({
@@ -52,11 +51,11 @@ export class TokenService {
       if (!decoded?.id || !decoded.iat)
         throw new UnauthorizedException('Invalid Token Payload');
 
-      if (await this._tokenModel.findOne({ jti: decoded.jti })) {
+      if (await this._tokenRepository.findOne({ filter:{jti: decoded.jti }})) {
         throw new UnauthorizedException('token is revoked ');
       }
 
-      const user = await this._userModel.findById(decoded.id);
+      const user = await this._userRepository.findById(decoded.id);
       if (!user) {
         throw new NotFoundException('User not found');
       }
@@ -80,7 +79,7 @@ export class TokenService {
   }
 
   async createRevokedToken(decoded: any) {
-    const revokedToken = await this._tokenModel.create({
+    const revokedToken = await this._tokenRepository.create({
       jti: decoded.jti,
       expiresIn: decoded.exp,
       userId: decoded.id,

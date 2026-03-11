@@ -29,6 +29,7 @@ import {
   fileValidation,
 } from 'src/common/multer/cloud.multer';
 import { MagicNumberInterceptor } from 'src/common/interceptor/magicNumber.Interceptor';
+import {type Request } from 'express';
 
 @UseGuards(AuthGuard, AccessRoleGuard)
 @Roles([UserRoleEnum.ADMIN])

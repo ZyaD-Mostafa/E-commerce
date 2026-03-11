@@ -27,13 +27,13 @@ export class Brand {
     required: true,
     ref: 'User',
   })
-  createdBy: Types.ObjectId;
+  userId: Types.ObjectId;
 
   @Prop({
     type: Object,
     required: true,
   })
-  image: {
+  logo: {
     secure_url?: string;
     public_id?: string;
   };
@@ -44,6 +44,11 @@ export class Brand {
     maxLength: 20,
   })
   slug: string;
+
+  @Prop({
+    type: Date,
+  })
+  changeCrediantialsTime: Date;
 
 }
 

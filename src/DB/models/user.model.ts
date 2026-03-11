@@ -65,7 +65,7 @@ export class User {
   @Prop({
     type: String,
     required: function () {
-      return this.provider === 'SYSTEM' ? true : false;
+      return this.provider === ProviderEnum.SYSTEM ? true : false;
     },
     trim: true,
   })
@@ -80,7 +80,9 @@ export class User {
   confrimEmailOTP: Date;
   @Prop({
     type: String,
-    required: true,
+    required: function () {
+      return this.role === UserRoleEnum.USER ? true : false;
+    },
     enum: {
       values: Object.values(GenderEnum),
       message: '{VALUE} gender must be MALE or FEMALE',
@@ -103,7 +105,7 @@ export class User {
     required: true,
     enum: {
       values: Object.values(UserRoleEnum),
-      message: '{VALUE} role must be USER or ADMIN',
+      message: '{VALUE} role must be USER or ADMIN or VENDOR',
     },
     default: UserRoleEnum.USER,
   })
@@ -117,21 +119,7 @@ export class User {
     type: String,
   })
   slug: string;
-
-  @Prop({
-    type: Object,
-  })
-  profileImage: {
-    secure_url?: string;
-    public_id?: string;
-  };
-  @Prop({
-    type: [object],
-  })
-  coverImage: {
-    secure_url?: string;
-    public_id?: string;
-  }[];
+ 
   @Virtual()
   otp: HOtpDocument[];
 }

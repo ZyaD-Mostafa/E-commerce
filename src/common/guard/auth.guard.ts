@@ -7,12 +7,13 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from 'src/DB/models/user.model';
+import { UserRepository } from 'src/DB/Repositories/user.repo';
 import { TokenService } from 'src/Modules/token/token.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly _userRepo: UserRepository,
     private readonly tokenService: TokenService,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -22,9 +23,12 @@ export class AuthGuard implements CanActivate {
     const [bearer, token] = authHeaders.split(' ');
     const { decoded } = await this.tokenService.decodeToken(bearer, token);
 
-    const user = await this.userModel.findById(decoded.id);
+    const user = await this._userRepo.findById(decoded.id);
     if (!user) {
       throw new UnauthorizedException('User not found');
+    }
+    if (!user.confirmEmail) {
+      throw new UnauthorizedException('User not confirmed');
     }
 
     request.user = user;

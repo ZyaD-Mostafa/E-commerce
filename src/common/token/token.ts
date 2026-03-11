@@ -4,6 +4,9 @@ import { UserRoleEnum } from '../enums/user.enums';
 export const getSignatureLevel = (role: UserRoleEnum = UserRoleEnum.USER) => {
   let signature = '';
   switch (role) {
+    case UserRoleEnum.VENDOR:
+      signature = process.env.VENDOR_JWT_SECRET as string;
+      break;
     case UserRoleEnum.ADMIN:
       signature = process.env.ADMIN_JWT_SECRET as string;
       break;

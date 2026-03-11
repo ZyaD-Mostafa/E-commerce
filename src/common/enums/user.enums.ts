@@ -1,6 +1,7 @@
 export enum UserRoleEnum {
   ADMIN = 'ADMIN',
   USER = 'USER',
+  VENDOR = 'VENDOR',
 }
 
 export enum GenderEnum {

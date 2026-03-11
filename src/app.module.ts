@@ -4,20 +4,21 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { resolve } from 'path';
 import { AuthModule } from './Modules/auth/auth.module';
-import { UsersController } from './Modules/users/users.controller';
-import { UsersService } from './Modules/users/users.service';
-import { UsersModule } from './Modules/users/users.module';
+import { UsersModule } from './Modules/User/users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { PreAuthMiddleware } from './middleware/preAuth.middleware';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 import { BrandModule } from './Modules/brand/brand.module';
-import { CategoryModule } from './Modules/category/category.module';
+import { CategoryModule } from './Modules/Admin/category/category.module';
 import { TokenModule } from './Modules/token/token.module';
-import { ProductModule } from './Modules/product/product.module';
-import { CartModule } from './Modules/cart/cart.module';
-import { CouponModule } from './Modules/coupon/coupon.module';
-import { OrderModule } from './Modules/order/order.module';
+import { ProductModule } from './Modules/Vendor/product/product.module';
+import { CartModule } from './Modules/User/cart/cart.module';
+import { CouponModule } from './Modules/Admin/coupon/coupon.module';
+import { OrderModule } from './Modules/User/order/order.module';
+import { GatewayModule } from './gateway/gateway/gateway.module';
+import { RepositoriesModule } from './DB/Repositories/repositories.module';
+import { AdminModule } from './Modules/Admin/admin/admin.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { OrderModule } from './Modules/order/order.module';
         });
       },
     }),
+    RepositoriesModule,
     AuthModule,
     UsersModule,
     ProductModule,
@@ -42,6 +44,8 @@ import { OrderModule } from './Modules/order/order.module';
     CartModule,
     CouponModule,
     OrderModule,
+    GatewayModule,
+    AdminModule
   ],
   controllers: [AppController],
   providers: [AppService],

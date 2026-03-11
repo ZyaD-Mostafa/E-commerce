@@ -38,7 +38,7 @@ export class Product {
     secure_url?: string;
     public_id?: string;
   }[];
-
+  
   @Prop({
     type: String,
     unique: true,

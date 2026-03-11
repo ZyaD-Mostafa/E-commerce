@@ -11,18 +11,21 @@ import { randomUUID } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { AppService } from 'src/app.service';
 import { TokenService } from 'src/Modules/token/token.service';
+import { UserRepository } from 'src/DB/Repositories/user.repo';
+import { OtpRepository } from 'src/DB/Repositories/otp.repo';
+import { filter } from 'rxjs';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name) private readonly _userModel: Model<HUserDocument>,
-    @InjectModel(Otp.name) private readonly _otpModel: Model<HOtpDocument>,
+    private readonly _userRepository: UserRepository,
+    private readonly _otpRepository: OtpRepository,
     private readonly _tokenService: TokenService,
   ) {}
 
   // function create otp
   async createOtp(userId: Types.ObjectId, type = OtpEnum.EMAIL_VERIFICATION) {
-    await this._otpModel.create([
+    await this._otpRepository.create([
       {
         createdBy: userId,
         code: generateOTP(),
@@ -31,15 +34,16 @@ export class AuthService {
       },
     ]);
   }
+
   async signup(body: any) {
     const { firstname, lastname, email, password } = body;
 
-    const chekUser = await this._userModel.findOne({ email });
+    const chekUser = await this._userRepository.findOne({ filter: { email } });
     if (chekUser) {
       throw new ConflictException('User already exists');
     }
 
-    const user = await this._userModel.create({
+    const user = await this._userRepository.create({
       firstname,
       lastname,
       email,
@@ -47,7 +51,6 @@ export class AuthService {
     });
 
     await this.createOtp(user._id);
-
     return {
       message: 'User created successfully',
       user,
@@ -56,9 +59,12 @@ export class AuthService {
 
   async resendOtp(resendOtp: ResendOtpDto) {
     const { email } = resendOtp;
-    const user = await this._userModel
-      .findOne({ email })
-      .populate([{ path: 'otp', match: { type: OtpEnum.EMAIL_VERIFICATION } }]);
+    const user = await this._userRepository.findOne({
+      filter: { email },
+      options: {
+        populate: [{ path: 'otp', match: { type: OtpEnum.EMAIL_VERIFICATION } }],
+      },
+    });
     if (!user) {
       throw new ConflictException('User not found');
     }
@@ -73,9 +79,12 @@ export class AuthService {
 
   async confrimEmail(confrimEmail: ConfrimEmailDto) {
     const { email, code } = confrimEmail;
-    const user = await this._userModel
-      .findOne({ email, confirmEmail: { $exists: false } })
-      .populate([{ path: 'otp', match: { type: OtpEnum.EMAIL_VERIFICATION } }]);
+    const user = await this._userRepository.findOne({
+      filter: { email, confirmEmail: { $exists: false } },
+      options: {
+        populate: [{ path: 'otp', match: { type: OtpEnum.EMAIL_VERIFICATION } }],
+      },
+    });
     if (!user) {
       throw new ConflictException('User not found');
     }
@@ -86,10 +95,11 @@ export class AuthService {
       throw new ConflictException('Invalid OTP');
     }
 
-    await this._userModel.updateOne(
-      { _id: user._id },
-      { $set: { confirmEmail: new Date() }, $inc: { __v: 1 } },
-    );
+    await this._userRepository.updateOne({
+      filter: { _id: user._id },
+      update: { $set: { confirmEmail: new Date() }, $inc: { __v: 1 } },
+      options: { runValidators: true },
+    });
 
     return {
       message: 'user confrimed successfully',
@@ -98,10 +108,12 @@ export class AuthService {
 
   async login(loginData: LoginDto) {
     const { email, password } = loginData;
-    const user = await this._userModel.findOne({
-      email,
-      confirmEmail: { $exists: true },
-      provider: ProviderEnum.SYSTEM,
+    const user = await this._userRepository.findOne({
+      filter: {
+        email,
+        confirmEmail: { $exists: true },
+        provider: ProviderEnum.SYSTEM,
+      },
     });
     if (!user) {
       throw new ConflictException('User not found');
@@ -122,7 +134,4 @@ export class AuthService {
       token,
     };
   }
-
- 
-  
 }

@@ -1,25 +1,23 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Brand } from 'src/DB/models/brand.model';
+import { Types } from 'mongoose';
 import { cloudinaryConfig } from 'src/common/multer/cloudinary.multer';
+import { Request } from 'express';
+import { BrandRepository } from 'src/DB/Repositories/brand.repo';
 
 @Injectable()
 export class BrandService {
-  constructor(@InjectModel(Brand.name) private brandModel: Model<Brand>) {}
+  constructor(private readonly _brandRepo: BrandRepository) {}
 
   async create(
     createBrandDto: CreateBrandDto,
-    req: any,
+    req: Request,
     file: Express.Multer.File,
   ) {
-    const brand = await this.brandModel.findOne({ name: createBrandDto.name });
+    const brand = await this._brandRepo.findOne({
+      filter: { name: createBrandDto.name },
+    });
     if (brand) {
       throw new Error('Brand already exists');
     }
@@ -29,13 +27,13 @@ export class BrandService {
         folder: `E-Commerce/brands`,
       },
     );
-    const newBrand = await this.brandModel.create({
+    const newBrand = await this._brandRepo.create({
       ...createBrandDto,
-      image: {
+      logo: {
         secure_url,
         public_id,
       },
-      createdBy: req.user._id,
+      userId: req.user?._id,
     });
     return {
       message: 'Brand created successfully',
@@ -44,37 +42,26 @@ export class BrandService {
   }
 
   async findAll() {
-    return await this.brandModel.find();
+    return await this._brandRepo.find();
   }
 
-  async findOne(id: string) {
-    const brand = await this.brandModel.findById(new Types.ObjectId(id));
-    if (!brand) throw new NotFoundException('Brand not found');
-    return brand;
-  }
+  async findOne(id: string) {}
 
   async update(
     _id: Types.ObjectId,
     updateBrandDto: UpdateBrandDto,
-    req: any,
+    req: Request,
     file?: Express.Multer.File,
   ) {
     // 1️⃣ جلب البراند
-    const brand = await this.brandModel.findById(_id);
-    if (!brand) throw new NotFoundException('Brand not found');
-    if (brand.createdBy.toString() !== req.user._id.toString()) {
-      throw new ForbiddenException(
-        'You are not authorized to update this brand',
-      );
-    }
-
+    const brand = await this.brandExists(_id.toString());
     // 3️⃣ رفع الصورة الجديدة لو موجودة
     let secureUrl = '';
     let publicId = '';
     if (file) {
       // حذف الصورة القديمة من Cloudinary
-      if (brand.image?.public_id) {
-        await cloudinaryConfig().uploader.destroy(brand.image.public_id);
+      if (brand.logo?.public_id) {
+        await cloudinaryConfig().uploader.destroy(brand.logo.public_id);
       }
 
       // رفع الصورة الجديدة
@@ -88,16 +75,16 @@ export class BrandService {
 
     // 4️⃣ تجهيز بيانات التحديث
     const updatedData: any = { name: updateBrandDto.name };
-    updatedData.image = file
+    updatedData.logo = file
       ? { secure_url: secureUrl, public_id: publicId }
-      : brand.image; // لو مفيش ملف جديد، خلي الصورة زي ما هي
+      : brand.logo; // لو مفيش ملف جديد، خلي الصورة زي ما هي
 
     // 5️⃣ تحديث البراند في MongoDB
-    const updatedBrand = await this.brandModel.findByIdAndUpdate(
-      _id,
-      updatedData,
-      { new: true, runValidators: true },
-    );
+    const updatedBrand = await this._brandRepo.findByIdAndUpdate({
+      id: _id,
+      update: updatedData,
+      options: { runValidators: true },
+    });
 
     // 6️⃣ إعادة النتيجة
     return {
@@ -107,14 +94,21 @@ export class BrandService {
   }
 
   async remove(id: string) {
-    const brand = await this.brandModel.findById(id);
-    if (!brand) throw new NotFoundException('Brand not found');
-    if (brand.image?.public_id) {
-      await cloudinaryConfig().uploader.destroy(brand.image.public_id);
+    const brand = await this.brandExists(id);
+    if (brand.logo?.public_id) {
+      await cloudinaryConfig().uploader.destroy(brand.logo.public_id);
     }
-    await this.brandModel.findByIdAndDelete(id);
+    await this._brandRepo.deleteById({ id: new Types.ObjectId(id) });
     return {
       message: 'Brand deleted successfully',
     };
+  }
+
+  private async brandExists(id: string) {
+    const brand = await this._brandRepo.findById({
+      id: new Types.ObjectId(id),
+    });
+    if (!brand) throw new NotFoundException('Brand not found');
+    return brand;
   }
 }
