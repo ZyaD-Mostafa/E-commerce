@@ -1,7 +1,11 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { OtpEnum, ProviderEnum } from 'src/common/enums/user.enums';
+import {
+  OtpEnum,
+  ProviderEnum,
+  UserRoleEnum,
+} from 'src/common/enums/user.enums';
 import { generateOTP } from 'src/common/utils/otp.util';
 import { HOtpDocument, Otp } from 'src/DB/models/otp.model';
 import { HUserDocument, User } from 'src/DB/models/user.model';
@@ -62,7 +66,9 @@ export class AuthService {
     const user = await this._userRepository.findOne({
       filter: { email },
       options: {
-        populate: [{ path: 'otp', match: { type: OtpEnum.EMAIL_VERIFICATION } }],
+        populate: [
+          { path: 'otp', match: { type: OtpEnum.EMAIL_VERIFICATION } },
+        ],
       },
     });
     if (!user) {
@@ -82,7 +88,9 @@ export class AuthService {
     const user = await this._userRepository.findOne({
       filter: { email, confirmEmail: { $exists: false } },
       options: {
-        populate: [{ path: 'otp', match: { type: OtpEnum.EMAIL_VERIFICATION } }],
+        populate: [
+          { path: 'otp', match: { type: OtpEnum.EMAIL_VERIFICATION } },
+        ],
       },
     });
     if (!user) {
@@ -111,7 +119,10 @@ export class AuthService {
     const user = await this._userRepository.findOne({
       filter: {
         email,
-        confirmEmail: { $exists: true },
+        $or: [
+          { role: { $ne: UserRoleEnum.USER } },
+          { role: UserRoleEnum.USER, confirmEmail: { $exists: true } },
+        ],
         provider: ProviderEnum.SYSTEM,
       },
     });

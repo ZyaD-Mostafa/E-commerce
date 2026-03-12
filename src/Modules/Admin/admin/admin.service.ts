@@ -67,7 +67,5 @@ export class AdminService {
   //   return `This action updates a #${id} admin`;
   // }
 
-  remove(id: number) {
-    return `This action removes a #${id} admin`;
-  }
+  
 }
