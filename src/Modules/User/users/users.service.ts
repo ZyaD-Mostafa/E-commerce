@@ -1,14 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { LogOutDto, UpdateProfileDto } from './user.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { LogOutDto, UpdatePasswordDto, UpdateProfileDto } from './user.dto';
 import { LogOutEnum } from 'src/common/enums/user.enums';
 import { TokenService } from '../../token/token.service';
 import { Request } from 'express';
-import { InjectModel } from '@nestjs/mongoose';
-import { User } from 'src/DB/models/user.model';
-import { Model } from 'mongoose';
-import { cloudinaryConfig } from 'src/common/multer/cloudinary.multer';
 import { UserRepository } from 'src/DB/Repositories/user.repo';
-import { filter } from 'rxjs';
+import { compareHash, hash } from 'src/common/utils/hashing/hash';
 
 @Injectable()
 export class UsersService {
@@ -128,5 +128,22 @@ export class UsersService {
       user,
     };
   }
-  
+
+  async updatePassword(body: UpdatePasswordDto, req: any) {
+    const user = await this._userRepository.findOne({
+      filter: { _id: req.user._id },
+    });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    if (!(await compareHash(body.password, user.password))) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+    user.password = body.newPassword; // 👈 plain
+    await user.save(); // 👈 pre-save hook هيعمل hash
+    return {
+      message: 'User password updated',
+      user,
+    };
+  }
 }

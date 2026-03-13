@@ -63,7 +63,7 @@ export class TokenService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-      if (!user.confirmEmail) {
+      if (!user.confirmEmail && user.role == UserRoleEnum.USER) {
         throw new UnauthorizedException('User not confirmed');
       }
       if ((user.changeCredintaialstime?.getTime() || 0) > decoded.iat * 1000) {

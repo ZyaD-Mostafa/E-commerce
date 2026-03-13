@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BrandService } from './brand.service';
 import { BrandController } from './brand.controller';
-import { TokenModule } from '../token/token.module';
+import { TokenModule } from 'src/Modules/token/token.module';
 
 @Module({
   imports: [TokenModule],

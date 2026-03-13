@@ -45,7 +45,10 @@ export class BrandService {
     return await this._brandRepo.find();
   }
 
-  async findOne(id: string) {}
+  async findOne(id: string) {
+    const brad = await this.brandExists(id);
+    return brad;
+  }
 
   async update(
     _id: Types.ObjectId,
@@ -102,6 +105,13 @@ export class BrandService {
     return {
       message: 'Brand deleted successfully',
     };
+  }
+
+  async getMyBrand(req: Request) {
+    const brand = await this._brandRepo.findOne({
+      filter: { userId: req.user?._id },
+    });
+    return brand;
   }
 
   private async brandExists(id: string) {

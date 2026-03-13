@@ -21,6 +21,8 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import {
   type LogOutDto,
   logOutSchema,
+  type UpdatePasswordDto,
+  updatePasswordSchema,
   type UpdateProfileDto,
   updateProfileSchema,
 } from './user.dto';
@@ -84,5 +86,13 @@ export class UsersController {
   @UsePipes(new ZodPipe(updateProfileSchema))
   updateProfile(@Body() body: UpdateProfileDto, @Req() req: Request) {
     return this.usersService.updateProfile(body, req);
+  }
+
+
+@Roles([UserRoleEnum.VENDOR ,  UserRoleEnum.USER  , UserRoleEnum.ADMIN])
+  @Patch("update-pass")
+  @UsePipes(new ZodPipe(updatePasswordSchema))
+  updatePassword(@Body() body: UpdatePasswordDto, @Req() req: Request) {
+    return this.usersService.updatePassword(body, req);
   }
 }

@@ -9,7 +9,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import { PreAuthMiddleware } from './middleware/preAuth.middleware';
 import { LoggerMiddleware } from './middleware/logger.middleware';
-import { BrandModule } from './Modules/brand/brand.module';
+import { BrandModule } from './Modules/Vendor/brand/brand.module';
 import { CategoryModule } from './Modules/Admin/category/category.module';
 import { TokenModule } from './Modules/token/token.module';
 import { ProductModule } from './Modules/Vendor/product/product.module';

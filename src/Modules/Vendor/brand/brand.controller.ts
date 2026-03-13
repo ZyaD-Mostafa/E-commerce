@@ -32,29 +32,36 @@ import { MagicNumberInterceptor } from 'src/common/interceptor/magicNumber.Inter
 import {type Request } from 'express';
 
 @UseGuards(AuthGuard, AccessRoleGuard)
-@Roles([UserRoleEnum.ADMIN])
+@Roles([UserRoleEnum.VENDOR])
 @Controller('brand')
 export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
-  @Post()
-  @UseInterceptors(
-    FileInterceptor('file', cloudFileUploadMulter('images')),
-    MagicNumberInterceptor([...fileValidation.images]),
-  )
-  create(
-    @Body(new ValidationPipe()) createBrandDto: CreateBrandDto,
-    @UploadedFile() file: Express.Multer.File,
-    @Req() req: Request,
-  ) {
-    return this.brandService.create(createBrandDto, req, file);
-  }
+  // @Post()
+  // @UseInterceptors(
+  //   FileInterceptor('file', cloudFileUploadMulter('images')),
+  //   MagicNumberInterceptor([...fileValidation.images]),
+  // )
+  // create(
+  //   @Body(new ValidationPipe()) createBrandDto: CreateBrandDto,
+  //   @UploadedFile() file: Express.Multer.File,
+  //   @Req() req: Request,
+  // ) {
+  //   return this.brandService.create(createBrandDto, req, file);
+  // }
 
+  @Get('my-brand')
+  getMyBrand(@Req() req: Request) {
+    return this.brandService.getMyBrand(req);
+  }
+  
+  @Roles([UserRoleEnum.ADMIN])
   @Get()
   findAll() {
     return this.brandService.findAll();
   }
 
+  @Roles([UserRoleEnum.ADMIN])
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.brandService.findOne(id);
