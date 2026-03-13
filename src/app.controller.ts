@@ -27,10 +27,10 @@ export class AppController {
 
     return { message: 'User deleted successfully' };
   }
-  @All('/*dummy')
-  dummy(@Req() req: Request) {
-    return {
-      message: `url ${req.url} not found`,
-    };
-  }
+  // @All('/*dummy')
+  // dummy(@Req() req: Request) {
+  //   return {
+  //     message: `url ${req.url} not found`,
+  //   };
+  // }
 }
