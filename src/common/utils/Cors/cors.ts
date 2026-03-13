@@ -14,10 +14,6 @@ export function corsOption() {
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   };
-  return {
-    origin: whiteList,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  };
+
   return corsOptions;
 }
