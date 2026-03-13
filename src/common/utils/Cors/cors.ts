@@ -6,6 +6,9 @@ export function corsOption() {
       origin: string,
       callback: (error: Error | null, allow?: boolean) => void,
     ) {
+      if (!origin) {
+        return callback(null, true);
+      }
       if (whiteList.includes(origin)) {
         callback(null, true);
       } else {
