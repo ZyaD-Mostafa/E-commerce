@@ -11,6 +11,7 @@ export const creteUserSchema = z
     confirmPassword: generalField.confirmPassword,
     gender: z.enum(GenderEnum).optional(),
     provider: z.enum(ProviderEnum).optional(),
+    phone: generalField.phone.optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',

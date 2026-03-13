@@ -121,6 +121,11 @@ export class User {
   })
   slug: string;
 
+  @Prop({
+    type: String,
+  })
+  phone: string;
+
   @Virtual()
   otp: HOtpDocument[];
 }

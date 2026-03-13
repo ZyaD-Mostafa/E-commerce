@@ -5,16 +5,17 @@ export const generalField = {
   firstname: z.string().min(3).max(50),
   lastname: z.string().min(3).max(50),
   email: z.email(),
-  password: z.string().min(6, { error: 'password must be 6 char long' }),
-  confirmPassword: z
+  password: z
     .string()
-    .min(6, { error: 'confirmPassword must be 6 char long' }),
+    .regex(/^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/), // ex : Password123!
+  confirmPassword: z.string(),
   otp: z.string().regex(/^\d{6}$/),
+  phone: z.string(),
   id: z.string().refine((data) => {
     return Types.ObjectId.isValid(data);
   }, 'Invalid ID format'),
 
-    file: function (minetype: string[]) {
+  file: function (minetype: string[]) {
     return z
       .strictObject({
         fieldname: z.string(),
@@ -28,7 +29,7 @@ export const generalField = {
         (data) => {
           return data.path || data.buffer;
         },
-        { error: "please provide a file " },
+        { error: 'please provide a file ' },
       );
   },
 };
