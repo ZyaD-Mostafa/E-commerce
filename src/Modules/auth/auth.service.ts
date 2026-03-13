@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -86,7 +90,10 @@ export class AuthService {
   async confrimEmail(confrimEmail: ConfrimEmailDto) {
     const { email, code } = confrimEmail;
     const user = await this._userRepository.findOne({
-      filter: { email, confirmEmail: { $exists: false } },
+      filter: {
+        email,
+        $or: [{ confirmEmail: { $exists: false } }, { confirmEmail: null }],
+      },
       options: {
         populate: [
           { path: 'otp', match: { type: OtpEnum.EMAIL_VERIFICATION } },
@@ -94,10 +101,10 @@ export class AuthService {
       },
     });
     if (!user) {
-      throw new ConflictException('User not found');
+      throw new NotFoundException('User not found or already confirmed');
     }
     if (!user.otp?.length) {
-      throw new ConflictException('OTP not found');
+      throw new NotFoundException('OTP not found');
     }
     if (!(await compareHash(code, user.otp[0].code))) {
       throw new ConflictException('Invalid OTP');

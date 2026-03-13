@@ -17,6 +17,7 @@ export class AppController {
     private readonly appService: AppService,
     private readonly _userRepo: UserRepository,
   ) {}
+  
   @Delete('del-acc/:email')
   async deleteAccount(@Param('email') email: string) {
     const result = await this._userRepo.deleteOne({ email });
