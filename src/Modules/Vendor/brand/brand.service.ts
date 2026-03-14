@@ -89,6 +89,9 @@ export class BrandService {
     if (updateBrandDto.name) {
       brand.name = updateBrandDto.name;
     }
+    if (updateBrandDto.description) {
+      brand.description = updateBrandDto.description;
+    }
     await brand.save();
 
     return {

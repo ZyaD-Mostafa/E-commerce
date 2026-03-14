@@ -29,7 +29,11 @@ import {
   fileValidation,
 } from 'src/common/multer/cloud.multer';
 import { ZodPipe } from 'src/common/pipes/zod.pipe';
-import { type UpdateCategoryDto, updateCategoryDtoSchema } from './dto/update-category.dto';
+import {
+  type AddbrandToCategoryDto,
+  type UpdateCategoryDto,
+  updateCategoryDtoSchema,
+} from './dto/update-category.dto';
 import { type Request } from 'express';
 
 @UseGuards(AuthGuard, AccessRoleGuard)
@@ -44,7 +48,8 @@ export class CategoryController {
     MagicNumberInterceptor([...fileValidation.images]),
   )
   create(
-    @Body(new ZodPipe(createCategoryDtoSchema)) createCategoryDto: CreateCategoryDto,
+    @Body(new ZodPipe(createCategoryDtoSchema))
+    createCategoryDto: CreateCategoryDto,
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request,
   ) {
@@ -61,8 +66,6 @@ export class CategoryController {
     return this.categoryService.findOne(id);
   }
 
-
-
   @UseInterceptors(
     FileInterceptor('file', cloudFileUploadMulter('images')),
     MagicNumberInterceptor([...fileValidation.images]),
@@ -70,11 +73,19 @@ export class CategoryController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body(new ZodPipe(updateCategoryDtoSchema)) updateCategoryDto: UpdateCategoryDto,
+    @Body(new ZodPipe(updateCategoryDtoSchema))
+    updateCategoryDto: UpdateCategoryDto,
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: Request,
   ) {
-    return this.categoryService.update(id, updateCategoryDto, file, req);
+    return this.categoryService.update(id, updateCategoryDto, file);
+  }
+
+  @Patch('toggle-brand-in-category/:id')
+  toggleBrandInCategory(
+    @Param('id') id: string,
+    @Body() addbarnd: AddbrandToCategoryDto,
+  ) {
+    return this.categoryService.toggleBrandInCategory(id, addbarnd);
   }
 
   @Delete(':id')

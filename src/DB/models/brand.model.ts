@@ -48,6 +48,12 @@ export class Brand {
     type: Date,
   })
   changeCredentialsTime: Date;
+  @Prop({
+    type: String,
+    minlength: 10,
+    maxlength: 50000,
+  })
+  description: string;
 }
 
 export const brandSchema = SchemaFactory.createForClass(Brand);

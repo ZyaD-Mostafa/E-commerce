@@ -118,7 +118,7 @@ export abstract class BaseRepository<T extends Document> {
   }
 
   // -------------------- FIND BY ID --------------------
-  async   findById({
+  async findById({
     id,
     select,
     options,
@@ -141,7 +141,14 @@ export abstract class BaseRepository<T extends Document> {
     update: UpdateQuery<T>;
     options?: MongooseUpdateQueryOptions<T>;
   }) {
-    return this.model.findByIdAndUpdate(id, update, options);
+    const finalUpdate = {
+      ...update,
+      $inc: {
+        __v: 1,
+        ...(update as any)?.$inc,
+      },
+    };
+    return this.model.findByIdAndUpdate(id, finalUpdate, options);
   }
 
   async findByIdAndDelete({ id }: { id: string | Types.ObjectId }) {

@@ -32,7 +32,7 @@ export class Category {
 
   @Prop({
     type: Object,
-    required: true,
+
   })
   image: {
     secure_url?: string;
@@ -49,7 +49,7 @@ export class Category {
   @Prop({
     type: String,
     minlength: 10,
-    maxlength: 5000,
+    maxlength: 50000,
   })
   description: string;
 
@@ -66,6 +66,7 @@ categorySchema.pre('save', async function (next) {
     this.slug = slugify(this.name, { lower: true });
   }
 });
+categorySchema.set('optimisticConcurrency', true);
 export type HCategoryDocument = HydratedDocument<Category>;
 export const CategoryModel = MongooseModule.forFeature([
   { name: Category.name, schema: categorySchema },

@@ -17,7 +17,6 @@ import { Reflector } from '@nestjs/core';
 @Injectable()
 export class brandCredentials implements CanActivate {
   constructor(
-    private readonly _userRepo: UserRepository,
     private readonly _brandRepo: BrandRepository,
     private readonly reflector: Reflector,
   ) {}

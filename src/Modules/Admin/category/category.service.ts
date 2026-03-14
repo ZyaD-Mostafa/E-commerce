@@ -11,7 +11,10 @@ import { Model, Types } from 'mongoose';
 import { Category } from 'src/DB/models/category.model';
 import { Brand } from 'src/DB/models/brand.model';
 import { cloudinaryConfig } from 'src/common/multer/cloudinary.multer';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import {
+  AddbrandToCategoryDto,
+  UpdateCategoryDto,
+} from './dto/update-category.dto';
 import { CategoryRepository } from 'src/DB/Repositories/category.repo';
 import { BrandRepository } from 'src/DB/Repositories/brand.repo';
 import { Request } from 'express';
@@ -89,21 +92,20 @@ export class CategoryService {
     id: string,
     updateCategoryDto: UpdateCategoryDto,
     file: Express.Multer.File,
-    req: Request,
   ) {
     const category = await this._categoryRepository.findById({ id });
     if (!category) {
       throw new NotFoundException('Category not found');
     }
 
-    if (updateCategoryDto.brands && updateCategoryDto.brands.length > 0) {
-      const foundBreand = await this._brandRepository.find({
-        filter: { _id: { $in: updateCategoryDto.brands } },
-      });
-      if (foundBreand.length !== updateCategoryDto.brands?.length) {
-        throw new BadRequestException('Missing Brands ids');
-      }
-    }
+    // if (updateCategoryDto.brands && updateCategoryDto.brands.length > 0) {
+    //   const foundBreand = await this._brandRepository.find({
+    //     filter: { _id: { $in: updateCategoryDto.brands } },
+    //   });
+    //   if (foundBreand.length !== updateCategoryDto.brands?.length) {
+    //     throw new BadRequestException('Missing Brands ids');
+    //   }
+    // }
     let image = category.image;
     if (file) {
       const { secure_url, public_id } =
@@ -114,22 +116,56 @@ export class CategoryService {
       if (category.image?.public_id) {
         await cloudinaryConfig().uploader.destroy(category.image.public_id);
       }
+      category.image = image;
     }
 
-    const updatedCategory = await this._categoryRepository.findByIdAndUpdate({
-      id,
-      update: {
-        $set: {
-          ...updateCategoryDto,
-          image,
-        },
-        $inc: { __v: 1 },
-      },
-    });
+    if (updateCategoryDto.name) category.name = updateCategoryDto.name;
+    if (updateCategoryDto.description)
+      category.description = updateCategoryDto.description;
+    await category.save();
 
     return {
       message: 'Category updated successfully',
-      category: updatedCategory,
+      category,
+    };
+  }
+
+  async toggleBrandInCategory(
+    categoryId: string,
+    addbrandToCategoryDto: AddbrandToCategoryDto,
+  ) {
+    const brandId = new Types.ObjectId(addbrandToCategoryDto.brandId);
+
+    const category = await this._categoryRepository.findById({
+      id: categoryId,
+    });
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+
+    const brand = await this._brandRepository.findById({ id: brandId });
+    if (!brand) {
+      throw new NotFoundException('Brand not found');
+    }
+
+    const isExist = category.brands.some(
+      (b) => b.toString() === brandId.toString(),
+    );
+
+    const update = isExist
+      ? { $pull: { brands: brandId } }
+      : { $addToSet: { brands: brandId } };
+
+    const updatedCategory = await this._categoryRepository.findByIdAndUpdate({
+      id: categoryId,
+      update,
+      options: { runValidators: true },
+    });
+
+    return {
+      message: isExist
+        ? 'Brand removed from category successfully'
+        : 'Brand added to category successfully',
     };
   }
 
