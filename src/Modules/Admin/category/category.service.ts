@@ -90,10 +90,7 @@ export class CategoryService {
     if (get) {
       return get;
     }
-    const category = await this._categoryRepository.findById({ id });
-    if (!category) {
-      throw new BadRequestException('Category not found');
-    }
+    const category = await this.categoryExist(id);
     await this.redis.setex(cached, 10, JSON.stringify(category));
     return category;
   }
@@ -103,10 +100,7 @@ export class CategoryService {
     updateCategoryDto: UpdateCategoryDto,
     file: Express.Multer.File,
   ) {
-    const category = await this._categoryRepository.findById({ id });
-    if (!category) {
-      throw new NotFoundException('Category not found');
-    }
+    const category = await this.categoryExist(id);
 
     // if (updateCategoryDto.brands && updateCategoryDto.brands.length > 0) {
     //   const foundBreand = await this._brandRepository.find({
@@ -146,12 +140,7 @@ export class CategoryService {
   ) {
     const brandId = new Types.ObjectId(addbrandToCategoryDto.brandId);
 
-    const category = await this._categoryRepository.findById({
-      id: categoryId,
-    });
-    if (!category) {
-      throw new NotFoundException('Category not found');
-    }
+    const category = await this.categoryExist(categoryId);
 
     const brand = await this._brandRepository.findById({ id: brandId });
     if (!brand) {
@@ -166,7 +155,7 @@ export class CategoryService {
       ? { $pull: { brands: brandId } }
       : { $addToSet: { brands: brandId } };
 
-    const updatedCategory = await this._categoryRepository.findByIdAndUpdate({
+    await this._categoryRepository.findByIdAndUpdate({
       id: categoryId,
       update,
       options: { runValidators: true },
@@ -189,5 +178,15 @@ export class CategoryService {
     return {
       message: 'Category deleted successfully',
     };
+  }
+
+  private async categoryExist(id: string) {
+    const category = await this._categoryRepository.findById({
+      id: new Types.ObjectId(id),
+    });
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+    return category;
   }
 }
