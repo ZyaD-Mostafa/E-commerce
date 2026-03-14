@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,12 +19,15 @@ import {
 import { CategoryRepository } from 'src/DB/Repositories/category.repo';
 import { BrandRepository } from 'src/DB/Repositories/brand.repo';
 import { Request } from 'express';
+import { Redis } from '@upstash/redis';
 
 @Injectable()
 export class CategoryService {
   constructor(
     private readonly _categoryRepository: CategoryRepository,
     private readonly _brandRepository: BrandRepository,
+    @Inject('UPSTASH_REDIS')
+    private readonly redis: Redis,
   ) {}
   async create(
     createCategoryDto: CreateCategoryDto,
@@ -81,10 +85,16 @@ export class CategoryService {
   }
 
   async findOne(id: string) {
+    const cached = `category:${id}`; //category:69b5cffa959b99d8e6b25e6d
+    const get = await this.redis.get(cached);
+    if (get) {
+      return get;
+    }
     const category = await this._categoryRepository.findById({ id });
     if (!category) {
       throw new BadRequestException('Category not found');
     }
+    await this.redis.setex(cached, 10, JSON.stringify(category));
     return category;
   }
 

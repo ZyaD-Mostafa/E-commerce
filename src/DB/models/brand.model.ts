@@ -50,7 +50,7 @@ export class Brand {
   changeCredentialsTime: Date;
   @Prop({
     type: String,
-    minlength: 10,
+    minlength: 2,
     maxlength: 50000,
   })
   description: string;

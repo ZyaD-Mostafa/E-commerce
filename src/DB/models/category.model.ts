@@ -48,7 +48,7 @@ export class Category {
   slug: string;
   @Prop({
     type: String,
-    minlength: 10,
+    minlength: 2,
     maxlength: 50000,
   })
   description: string;

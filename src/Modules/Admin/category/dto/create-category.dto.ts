@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const createCategoryDtoSchema = z.strictObject({
   name: z.string().min(2).max(20),
-  description: z.string().min(10).max(50000).optional(),
+  description: z.string().min(2).max(50000).optional(),
 
   brands: z
     .preprocess((value) => {
