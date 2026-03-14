@@ -29,10 +29,11 @@ import {
   fileValidation,
 } from 'src/common/multer/cloud.multer';
 import { MagicNumberInterceptor } from 'src/common/interceptor/magicNumber.Interceptor';
-import {type Request } from 'express';
+import { type Request } from 'express';
 import { brandCredentials } from 'src/common/guard/brandCredentials.guard';
+import { SkipGuard } from 'src/common/decorator/skipBrandCredentail.decorator';
 
-@UseGuards(AuthGuard, AccessRoleGuard , brandCredentials)
+@UseGuards(AuthGuard, AccessRoleGuard, brandCredentials)
 @Roles([UserRoleEnum.VENDOR])
 @Controller('brand')
 export class BrandController {
@@ -51,11 +52,12 @@ export class BrandController {
   //   return this.brandService.create(createBrandDto, req, file);
   // }
 
+  @SkipGuard()
   @Get('my-brand')
   getMyBrand(@Req() req: Request) {
     return this.brandService.getMyBrand(req);
   }
-  
+
   @Roles([UserRoleEnum.ADMIN])
   @Get()
   findAll() {

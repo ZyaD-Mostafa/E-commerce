@@ -23,7 +23,7 @@ export function MagicNumberInterceptor(
       const file = req.file;
 
       if (!file) {
-        throw new BadRequestException('No file uploaded');
+        return next.handle();
       }
 
       // قراءة الفايل من الديسك

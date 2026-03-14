@@ -48,7 +48,6 @@ export class Brand {
     type: Date,
   })
   changeCredentialsTime: Date;
-
 }
 
 export const brandSchema = SchemaFactory.createForClass(Brand);
@@ -58,6 +57,8 @@ brandSchema.pre('save', async function (next) {
     this.slug = slugify(this.name, { lower: true });
   }
 });
+brandSchema.set('optimisticConcurrency', true);
+
 export type HBrandDocument = HydratedDocument<Brand>;
 export const BrandModel = MongooseModule.forFeature([
   { name: Brand.name, schema: brandSchema },

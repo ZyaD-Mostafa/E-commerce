@@ -1,14 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import { Types } from 'mongoose';
 import { cloudinaryConfig } from 'src/common/multer/cloudinary.multer';
 import { Request } from 'express';
 import { BrandRepository } from 'src/DB/Repositories/brand.repo';
+import { Redis } from '@upstash/redis';
 
 @Injectable()
 export class BrandService {
-  constructor(private readonly _brandRepo: BrandRepository) {}
+  constructor(
+    private readonly _brandRepo: BrandRepository,
+    @Inject('UPSTASH_REDIS')
+    private readonly redis: Redis,
+  ) {}
 
   async create(
     createBrandDto: CreateBrandDto,
@@ -76,25 +81,19 @@ export class BrandService {
 
       secureUrl = result.secure_url;
       publicId = result.public_id;
+      brand.logo = {
+        secure_url: secureUrl,
+        public_id: publicId,
+      };
     }
+    if (updateBrandDto.name) {
+      brand.name = updateBrandDto.name;
+    }
+    await brand.save();
 
-    // 4️⃣ تجهيز بيانات التحديث
-    const updatedData: any = { name: updateBrandDto.name };
-    updatedData.logo = file
-      ? { secure_url: secureUrl, public_id: publicId }
-      : brand.logo; // لو مفيش ملف جديد، خلي الصورة زي ما هي
-
-    // 5️⃣ تحديث البراند في MongoDB
-    const updatedBrand = await this._brandRepo.updateOne({
-      filter: { _id: brand._id },
-      update: { $set: updatedData, $inc: { __v: 1 } },
-      options: { runValidators: true },
-    });
-
-    // 6️⃣ إعادة النتيجة
     return {
       message: 'Brand updated successfully',
-      brand: updatedBrand,
+      brand,
     };
   }
 
@@ -110,9 +109,14 @@ export class BrandService {
   }
 
   async getMyBrand(req: Request) {
+    const cachedBrand = await this.redis.get(`brand:${req.user?._id}`);
+    if (cachedBrand) {
+      return cachedBrand;
+    }
     const brand = await this._brandRepo.findOne({
       filter: { userId: req.user?._id },
     });
+    await this.redis.setex(`brand:${req.user?._id}`, 10, JSON.stringify(brand));
     return brand;
   }
 

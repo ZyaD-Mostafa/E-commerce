@@ -5,19 +5,31 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
 import { BrandRepository } from 'src/DB/Repositories/brand.repo';
 import { UserRepository } from 'src/DB/Repositories/user.repo';
 import { UserRoleEnum } from '../enums/user.enums';
+import {
+  SKIP_GUARD,
+  SkipGuard,
+} from '../decorator/skipBrandCredentail.decorator';
+import { Reflector } from '@nestjs/core';
 
 @Injectable()
 export class brandCredentials implements CanActivate {
   constructor(
     private readonly _userRepo: UserRepository,
     private readonly _brandRepo: BrandRepository,
+    private readonly reflector: Reflector,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+    const skip = this.reflector.getAllAndOverride<boolean>(SKIP_GUARD, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (skip) {
+      return true;
+    }
     const user = request.user;
     if (user?.role !== UserRoleEnum.VENDOR) {
       return true;
