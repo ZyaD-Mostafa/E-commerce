@@ -69,7 +69,7 @@ export class TokenService {
       if ((user.changeCredintaialstime?.getTime() || 0) > decoded.iat * 1000) {
         throw new UnauthorizedException('logedOut from All devices');
       }
-      return { user, decoded };
+      return { user , decoded };
     } catch (error) {
       // ✅ التوكين انتهى
       if (error instanceof TokenExpiredError) {

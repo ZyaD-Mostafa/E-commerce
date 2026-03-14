@@ -47,7 +47,7 @@ export class Brand {
   @Prop({
     type: Date,
   })
-  changeCrediantialsTime: Date;
+  changeCredentialsTime: Date;
 
 }
 

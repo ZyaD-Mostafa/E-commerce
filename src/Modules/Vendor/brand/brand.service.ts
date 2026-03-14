@@ -51,13 +51,15 @@ export class BrandService {
   }
 
   async update(
-    _id: Types.ObjectId,
     updateBrandDto: UpdateBrandDto,
     req: Request,
     file?: Express.Multer.File,
   ) {
+    if (!req.user?.id) {
+      throw new NotFoundException('user not found');
+    }
     // 1️⃣ جلب البراند
-    const brand = await this.brandExists(_id.toString());
+    const brand = await this.brandExists(req.user?.id.toString());
     // 3️⃣ رفع الصورة الجديدة لو موجودة
     let secureUrl = '';
     let publicId = '';
@@ -83,9 +85,9 @@ export class BrandService {
       : brand.logo; // لو مفيش ملف جديد، خلي الصورة زي ما هي
 
     // 5️⃣ تحديث البراند في MongoDB
-    const updatedBrand = await this._brandRepo.findByIdAndUpdate({
-      id: _id,
-      update: updatedData,
+    const updatedBrand = await this._brandRepo.updateOne({
+      filter: { _id: brand._id },
+      update: { $set: updatedData, $inc: { __v: 1 } },
       options: { runValidators: true },
     });
 
@@ -115,8 +117,8 @@ export class BrandService {
   }
 
   private async brandExists(id: string) {
-    const brand = await this._brandRepo.findById({
-      id: new Types.ObjectId(id),
+    const brand = await this._brandRepo.findOne({
+      filter: { userId: new Types.ObjectId(id) },
     });
     if (!brand) throw new NotFoundException('Brand not found');
     return brand;

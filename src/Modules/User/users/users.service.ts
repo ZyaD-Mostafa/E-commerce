@@ -4,17 +4,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { LogOutDto, UpdatePasswordDto, UpdateProfileDto } from './user.dto';
-import { LogOutEnum } from 'src/common/enums/user.enums';
+import { LogOutEnum, UserRoleEnum } from 'src/common/enums/user.enums';
 import { TokenService } from '../../token/token.service';
 import { Request } from 'express';
 import { UserRepository } from 'src/DB/Repositories/user.repo';
 import { compareHash, hash } from 'src/common/utils/hashing/hash';
+import { BrandRepository } from 'src/DB/Repositories/brand.repo';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly _tokenService: TokenService,
     private readonly _userRepository: UserRepository,
+    private readonly _brandRepository: BrandRepository,
   ) {}
   async getProfile(req: Request) {
     return {
@@ -138,6 +140,17 @@ export class UsersService {
     }
     if (!(await compareHash(body.password, user.password))) {
       throw new BadRequestException('Current password is incorrect');
+    }
+    if (user.role === UserRoleEnum.VENDOR) {
+      const brand = await this._brandRepository.findOne({
+        filter: { userId: req.user._id },
+      });
+      if (!brand) {
+        throw new NotFoundException('Brand not found');
+      }
+
+      brand.changeCredentialsTime = new Date();
+      await brand.save();
     }
     user.password = body.newPassword; // 👈 plain
     await user.save(); // 👈 pre-save hook هيعمل hash

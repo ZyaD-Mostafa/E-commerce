@@ -30,8 +30,9 @@ import {
 } from 'src/common/multer/cloud.multer';
 import { MagicNumberInterceptor } from 'src/common/interceptor/magicNumber.Interceptor';
 import {type Request } from 'express';
+import { brandCredentials } from 'src/common/guard/brandCredentials.guard';
 
-@UseGuards(AuthGuard, AccessRoleGuard)
+@UseGuards(AuthGuard, AccessRoleGuard , brandCredentials)
 @Roles([UserRoleEnum.VENDOR])
 @Controller('brand')
 export class BrandController {
@@ -67,19 +68,17 @@ export class BrandController {
     return this.brandService.findOne(id);
   }
 
-  @Patch(':id')
+  @Patch()
   @UseInterceptors(
     FileInterceptor('file', cloudFileUploadMulter('images')),
     MagicNumberInterceptor([...fileValidation.images]),
   )
   update(
-    @Param('id') id: string,
     @Body() updateBrandDto: UpdateBrandDto,
     @Req() req: Request,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const _id = new Types.ObjectId(id);
-    return this.brandService.update(_id, updateBrandDto, req, file);
+    return this.brandService.update(updateBrandDto, req, file);
   }
 
   @Delete(':id')
