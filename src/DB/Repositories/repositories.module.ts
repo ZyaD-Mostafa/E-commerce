@@ -21,6 +21,8 @@ import { OrderRepository } from './order.repo';
 import { UserRepository } from './user.repo';
 import { TokenRepository } from './token.repo';
 import { OtpRepository } from './otp.repo';
+import { Wishlist, wishlistSchema } from '../models/wishlist.model';
+import { WishlistRepository } from './wishlist.repo';
 // ... import all other repositories
 @Global()
 @Module({
@@ -35,6 +37,7 @@ import { OtpRepository } from './otp.repo';
       { name: User.name, schema: userSchema },
       { name: Otp.name, schema: otpSchema },
       { name: Token.name, schema: tokenSchema },
+      { name: Wishlist.name, schema: wishlistSchema },
       // ... add all models
     ]),
   ],
@@ -48,6 +51,7 @@ import { OtpRepository } from './otp.repo';
     UserRepository,
     OtpRepository,
     TokenRepository,
+    WishlistRepository,
     // ... add all repositories
   ],
   exports: [
@@ -60,6 +64,7 @@ import { OtpRepository } from './otp.repo';
     UserRepository,
     OtpRepository,
     TokenRepository,
+    WishlistRepository,
     // ... export all repositories
   ],
 })

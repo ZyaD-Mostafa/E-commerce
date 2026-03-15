@@ -5,7 +5,7 @@ import { TokenModule } from '../../token/token.module';
 import { RedisModule } from 'src/common/provider/redis.module';
 
 @Module({
-  imports: [TokenModule ,RedisModule],
+  imports: [TokenModule, RedisModule],
   controllers: [CategoryController],
   providers: [CategoryService],
 })

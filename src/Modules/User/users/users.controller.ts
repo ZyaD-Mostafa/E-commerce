@@ -39,8 +39,8 @@ import { type Request } from 'express';
 
 @Controller('user')
 @UseInterceptors(LoggingInterceptor)
-@Roles([UserRoleEnum.USER])
 @UseGuards(AuthGuard, AccessRoleGuard)
+@Roles([UserRoleEnum.USER])
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
   @Get('/profile')

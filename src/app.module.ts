@@ -19,6 +19,7 @@ import { OrderModule } from './Modules/User/order/order.module';
 import { GatewayModule } from './gateway/gateway/gateway.module';
 import { RepositoriesModule } from './DB/Repositories/repositories.module';
 import { AdminModule } from './Modules/Admin/admin/admin.module';
+import { WishlistModule } from './Modules/User/wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { AdminModule } from './Modules/Admin/admin/admin.module';
     BrandModule,
     CategoryModule,
     TokenModule,
+    WishlistModule,
     CartModule,
     CouponModule,
     OrderModule,
@@ -56,3 +58,4 @@ export class AppModule implements NestModule {
     consumer.apply(PreAuthMiddleware).forRoutes('user', 'admin');
   }
 }
+
