@@ -6,13 +6,10 @@ import {
   Patch,
   Param,
   Delete,
-  UsePipes,
   UploadedFiles,
   UseInterceptors,
   Req,
   UseGuards,
-  UploadedFile,
-  Inject,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import {
@@ -24,43 +21,20 @@ import {
   UpdateProductSchemaDto,
 } from './dto/update-product.dto';
 import { ZodPipe } from 'src/common/pipes/zod.pipe';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { cloudFileUploadMulter } from 'src/common/multer/cloud.multer';
 import { UserRoleEnum } from 'src/common/enums/user.enums';
 import { Roles } from 'src/common/decorator/role.decorator';
 import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AccessRoleGuard } from 'src/common/guard/accessRole.guard';
 import { Types } from 'mongoose';
-import { type Redis } from '@upstash/redis';
+import { type Request } from 'express';
 
 @UseGuards(AuthGuard, AccessRoleGuard)
-@Roles([UserRoleEnum.ADMIN])
+@Roles([UserRoleEnum.VENDOR])
 @Controller('product')
 export class ProductController {
-  constructor(
-    private readonly productService: ProductService,
-   // @Inject('REDIS_CLIENT') private readonly redisClient: Redis,
-  ) {}
-
-  // @Get('test-redis')
-  // async testRedis() {
-  //   const cachedUser = await this.redisClient.get('user');
-
-  //   if (cachedUser) {
-  //     console.log(typeof cachedUser);
-      
-  //     return cachedUser 
-  //   }
-
-  //   const user = {
-  //     message: 'hi done at ' + new Date().toISOString(),
-  //     username: 'zyad',
-  //   };
-
-  //   await this.redisClient.set('user', JSON.stringify(user), { ex: 60 });
-
-  //   return user;
-  // }
+  constructor(private readonly productService: ProductService) {}
 
   @Post()
   @UseInterceptors(

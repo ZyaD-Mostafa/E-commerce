@@ -9,6 +9,7 @@ import { type CreateCartDto } from './dto/create-cart.dto';
 import { CartRepository } from 'src/DB/Repositories/cart.repo';
 import { ProductRepository } from 'src/DB/Repositories/product.repo';
 import { CouponRepository } from 'src/DB/Repositories/coupon.repo';
+import { Request } from 'express';
 
 @Injectable()
 export class CartService {
@@ -25,20 +26,53 @@ export class CartService {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-    if (product.stock < createCartDto.quantity) {
-      throw new BadRequestException('Not enough stock');
+    let price: number;
+    let stock: number;
+
+    // 🟢 Variant Product
+    if (createCartDto.variantId) {
+      const variant = product.variants?.find(
+        (v) =>
+          v.id?.trim().toLowerCase() ===
+          createCartDto.variantId?.trim().toLowerCase(),
+      );
+
+      if (!variant) {
+        throw new NotFoundException('Variant not found');
+      }
+
+      if (variant.stock < createCartDto.quantity) {
+        throw new BadRequestException('Not enough variant stock');
+      }
+
+      price = variant.salePrice || 0;
+      stock = variant.stock || 0;
+    }
+    // 🟢 Simple Product
+    else {
+      if ((product.stock || 0) < createCartDto.quantity) {
+        throw new BadRequestException('Not enough product stock');
+      }
+
+      price = product.salePrice || 0;
+      stock = product.stock || 0;
     }
 
-    const price = product.salePrice;
     const total = price * createCartDto.quantity;
 
-    let cart = await this._CartRepo.findOne({ filter: { user: req.user.id } });
+    let cart = await this._CartRepo.findOne({
+      filter: { user: req.user.id },
+    });
+
     if (!cart) {
       cart = await this._CartRepo.create({
         user: req.user.id,
         items: [
           {
-            product: new Types.ObjectId(createCartDto.product),
+            product: new Types.ObjectId(product._id.toString()),
+            variantId: createCartDto.variantId
+              ? createCartDto.variantId
+              : undefined,
             quantity: createCartDto.quantity,
             price,
             total,
@@ -47,16 +81,24 @@ export class CartService {
         subTotal: total,
       });
     } else {
-      const itemIdex = cart.items.findIndex(
-        (item) => item.product.toString() === createCartDto.product.toString(),
+      const itemIndex = cart.items.findIndex(
+        (item) =>
+          item.product.toString() === product._id.toString() &&
+          (createCartDto.variantId
+            ? item.variantId?.toString() === createCartDto.variantId
+            : !item.variantId),
       );
-      if (itemIdex > -1) {
-        cart.items[itemIdex].quantity += createCartDto.quantity;
-        cart.items[itemIdex].total =
-          cart.items[itemIdex].quantity * cart.items[itemIdex].price;
+
+      if (itemIndex > -1) {
+        cart.items[itemIndex].quantity += createCartDto.quantity;
+        cart.items[itemIndex].total =
+          cart.items[itemIndex].quantity * cart.items[itemIndex].price;
       } else {
         cart.items.push({
-          product: new Types.ObjectId(createCartDto.product),
+          product: new Types.ObjectId(product._id.toString()),
+          variantId: createCartDto.variantId
+            ? createCartDto.variantId
+            : undefined,
           quantity: createCartDto.quantity,
           price,
           total,
@@ -70,15 +112,20 @@ export class CartService {
     return cart;
   }
 
-  async updateCart(productId: string, quantity: number, req: any) {
+  async updateCart(
+    productId: string,
+    quantity: number,
+    req: Request,
+    variantId?: string,
+  ) {
     const cart = await this._CartRepo.findOne({
-      filter: { user: req.user.id },
+      filter: { user: req.user?.id },
     });
 
     if (!cart) {
       throw new NotFoundException('Cart not found');
     }
-    if (cart.user.toString() !== req.user.id) {
+    if (cart.user.toString() !== req.user?.id) {
       throw new BadRequestException(
         'You are not authorized to update this cart',
       );
@@ -89,21 +136,41 @@ export class CartService {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-    const itemIndex = cart.items.findIndex(
-      (item) => item.product.toString() === productId.toString(),
-    );
+    let price = product.salePrice || 0;
+    let stock = product.stock || 0;
+
+    if (variantId) {
+      const variant = product.variants?.find(
+        (v) => v.id?.toString().trim() === variantId.trim().toString(),
+      );
+      if (!variant) {
+        throw new NotFoundException('Variant not found');
+      }
+      price = variant.salePrice || 0;
+      stock = variant.stock || 0;
+    }
+
+    const itemIndex = cart.items.findIndex((item) => {
+      if (variantId) {
+        return (
+          item.product.toString() === productId.toString() &&
+          item.variantId === variantId
+        );
+      }
+      return item.product.toString() === productId.toString();
+    });
     if (itemIndex === -1) {
       throw new NotFoundException('Product not found in cart');
     }
     if (quantity <= 0) {
       cart.items.splice(itemIndex, 1);
     } else {
-      if (quantity > product.stock) {
+      if (quantity > stock) {
         throw new BadRequestException('Not enough stock');
       }
       const item = cart.items[itemIndex];
       item.quantity = quantity;
-      item.total = item.quantity * item.price;
+      item.total = item.quantity * price;
     }
 
     cart.subTotal = cart.items.reduce((sum, item) => sum + item.total, 0);
@@ -112,16 +179,14 @@ export class CartService {
     return cart;
   }
 
-  findAll() {
-    return `This action returns all cart`;
-  }
-
   async findOne(req: any) {
     const cart = await this._CartRepo.findOne({
       filter: { user: req.user.id },
       options: {
-        populate: 'items.product',
-        select: 'name origanPrice discount salePrice image',
+        populate: {
+          path: 'items.product',
+          select: 'name originalPrice discount salePrice image stock variants',
+        },
       },
     });
     if (!cart) {
@@ -130,25 +195,41 @@ export class CartService {
     return cart;
   }
 
-  async removeItem(productId: string, req: any) {
-    const cart = await this._CartRepo.findOne({
-      filter: { user: req.user.id },
-    });
-    if (!cart) {
-      throw new NotFoundException('Cart not found');
-    }
-    const itemindex = cart.items.findIndex(
-      (item) => item.product.toString() === productId.toString(),
-    );
-    if (itemindex === -1) {
-      throw new NotFoundException('Product not found in cart');
-    }
-    cart.items.splice(itemindex, 1);
-    cart.subTotal = cart.items.reduce((sum, item) => sum + item.total, 0);
-    await cart.save();
+  async removeItem(productId: string, req: Request, variantId?: string) {
+  const cart = await this._CartRepo.findOne({
+    filter: { user: req.user?.id },
+  });
 
-    return cart;
+  if (!cart) {
+    throw new NotFoundException('Cart not found');
   }
+
+  const isSameItem = (item: any) => {
+    const sameProduct =
+      item.product.toString() === productId.toString();
+
+    const sameVariant = variantId
+      ? item.variantId?.toString() === variantId.toString()
+      : !item.variantId;
+
+    return sameProduct && sameVariant;
+  };
+
+  const itemIndex = cart.items.findIndex(isSameItem);
+
+  if (itemIndex === -1) {
+    throw new NotFoundException('Product not found in cart');
+  }
+
+  cart.items.splice(itemIndex, 1);
+
+  cart.subTotal = cart.items.reduce((sum, item) => sum + item.total, 0);
+
+  await cart.save();
+
+  return cart;
+}
+
 
   async applayCoupon(req: any, code) {
     const cart = await this.cartExsintance(req);

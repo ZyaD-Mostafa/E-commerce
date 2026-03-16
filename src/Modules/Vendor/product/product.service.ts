@@ -1,20 +1,16 @@
 import {
   BadRequestException,
   ForbiddenException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { type CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Request } from 'express';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { Category } from 'src/DB/models/category.model';
+import {  Types } from 'mongoose';
 import { cloudinaryConfig } from 'src/common/multer/cloudinary.multer';
-import { Product } from 'src/DB/models/product.model';
 import { ProductRepository } from 'src/DB/Repositories/product.repo';
 import { CategoryRepository } from 'src/DB/Repositories/category.repo';
+import { Request } from 'express';
 
 @Injectable()
 export class ProductService {
@@ -27,7 +23,7 @@ export class ProductService {
   async create(
     createProductDto: CreateProductDto,
     files: Express.Multer.File[],
-    req: any,
+    req: Request,
   ) {
     const oldProd = await this._prodcutRepo.findOne({
       filter: { name: createProductDto.name },
@@ -45,14 +41,10 @@ export class ProductService {
       throw new NotFoundException('Category not found');
     }
 
-    const discount =
-      createProductDto.originalPrice * (createProductDto.discount / 100);
-    // Replace lines 51-55 in product.service.ts
     const product = await this._prodcutRepo.create({
       ...createProductDto,
       category: new Types.ObjectId(createProductDto.category), // Convert to ObjectId
-      salePrice: createProductDto.originalPrice - discount,
-      createdBy: new Types.ObjectId(req.user.id), // Also convert user ID
+      createdBy: new Types.ObjectId(req.user?.id), // Also convert user ID
     });
 
     let image: { secure_url: string; public_id: string }[] = [];

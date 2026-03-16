@@ -16,6 +16,9 @@ export class CartItem {
 
   @Prop({ type: Number, required: true })
   total: number;
+  @Prop({ type: String })
+  variantId? : string;
+
 }
 
 @Schema({
