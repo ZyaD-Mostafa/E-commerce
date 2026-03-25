@@ -12,6 +12,7 @@ import {
   UseGuards,
   Req,
   UploadedFiles,
+  Query,
 } from '@nestjs/common';
 import { BrandService } from './brand.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
@@ -60,8 +61,8 @@ export class BrandController {
 
   @Roles([UserRoleEnum.ADMIN])
   @Get()
-  findAll() {
-    return this.brandService.findAll();
+  findAll(@Query("search") search?: string) {
+    return this.brandService.findAll(search);
   }
 
   @Roles([UserRoleEnum.ADMIN])
