@@ -11,6 +11,7 @@ import {
   UsePipes,
   UploadedFile,
   Req,
+  Query,
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import {
@@ -35,6 +36,7 @@ import {
   updateCategoryDtoSchema,
 } from './dto/update-category.dto';
 import { type Request } from 'express';
+import { Public } from 'src/common/decorator/public.decorator';
 
 @UseGuards(AuthGuard, AccessRoleGuard)
 @Roles([UserRoleEnum.ADMIN])
@@ -56,9 +58,10 @@ export class CategoryController {
     return this.categoryService.create(createCategoryDto, file, req);
   }
 
+  @Public()
   @Get()
-  findAll() {
-    return this.categoryService.findAll();
+  findAll(@Query('search') search?: string) {
+    return this.categoryService.findAll(search);
   }
 
   @Get(':id')

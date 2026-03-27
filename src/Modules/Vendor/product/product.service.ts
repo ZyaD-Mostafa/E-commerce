@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { type CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import {  Types } from 'mongoose';
+import { Types } from 'mongoose';
 import { cloudinaryConfig } from 'src/common/multer/cloudinary.multer';
 import { ProductRepository } from 'src/DB/Repositories/product.repo';
 import { CategoryRepository } from 'src/DB/Repositories/category.repo';
@@ -69,6 +69,17 @@ export class ProductService {
   async findOne(id: string) {
     const product = await this.productExist(id);
     return product;
+  }
+
+  async findAll(search?: string) {
+    const filter: any = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+    return await this._prodcutRepo.find({ filter });
   }
 
   async update(

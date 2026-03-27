@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import {
@@ -29,6 +30,7 @@ import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AccessRoleGuard } from 'src/common/guard/accessRole.guard';
 import { Types } from 'mongoose';
 import { type Request } from 'express';
+import { Public } from 'src/common/decorator/public.decorator';
 
 @UseGuards(AuthGuard, AccessRoleGuard)
 @Roles([UserRoleEnum.VENDOR])
@@ -50,6 +52,12 @@ export class ProductController {
 
     return this.productService.create(createProductDto, files, req);
   }
+  @Public()
+  @Get()
+  findAll(@Query('search') search?: string) {
+    return this.productService.findAll(search);
+  }
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productService.findOne(id);

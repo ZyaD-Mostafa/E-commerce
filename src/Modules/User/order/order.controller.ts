@@ -1,23 +1,18 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
   UseGuards,
   ValidationPipe,
   Req,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
 import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AccessRoleGuard } from 'src/common/guard/accessRole.guard';
 import { Roles } from 'src/common/decorator/role.decorator';
 import { UserRoleEnum } from 'src/common/enums/user.enums';
-import {  type HUserDocument } from 'src/DB/models/user.model';
 
 
 @UseGuards(AuthGuard, AccessRoleGuard)

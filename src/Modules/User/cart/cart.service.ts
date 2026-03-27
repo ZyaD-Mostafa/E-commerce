@@ -10,6 +10,7 @@ import { CartRepository } from 'src/DB/Repositories/cart.repo';
 import { ProductRepository } from 'src/DB/Repositories/product.repo';
 import { CouponRepository } from 'src/DB/Repositories/coupon.repo';
 import { Request } from 'express';
+import { HProductDocument, Variant } from 'src/DB/models/product.model';
 
 @Injectable()
 export class CartService {
@@ -185,51 +186,100 @@ export class CartService {
       options: {
         populate: {
           path: 'items.product',
+          model: 'Product',
           select: 'name originalPrice discount salePrice image stock variants',
         },
       },
     });
+
     if (!cart) {
       throw new NotFoundException('Cart not found');
     }
+
+    // إعادة تشكيل الكارت بالشكل المبسط
+    const simplifiedCart = {
+      id: cart.id,
+      user: cart.user,
+      items: cart.items.map((item) => {
+        const product = item.product as unknown as HProductDocument;
+        // Type guard to ensure product is populated
+        // Type guard to ensure product is populated
+        if (
+          !product ||
+          typeof product === 'string' ||
+          !('variants' in product)
+        ) {
+          throw new NotFoundException('Product data not properly populated');
+        }
+        const hasVariants =
+          Array.isArray(product.variants) && product.variants.length > 0;
+
+        // لو فيه variant محدد
+        const variantData = hasVariants
+          ? (product.variants as Variant[]).find((v) => v.id === item.variantId)
+          : null;
+
+        return {
+          productId: product.id,
+          name: product.name,
+          image: product.image.map((img) => img.secure_url),
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total,
+          ...(variantData
+            ? {
+                variant: {
+                  id: variantData.id,
+                  name: variantData.name,
+                  salePrice: variantData.salePrice,
+                  originalPrice: variantData.originalPrice,
+                  discount: variantData.discount,
+                  stock: variantData.stock,
+                },
+              }
+            : {}),
+        };
+      }),
+      subTotal: cart.subTotal,
+      discount: cart.discount,
+      totalAfterDiscount: cart.totalAfterDiscount,
+    };
+
+    return simplifiedCart;
+  }
+  async removeItem(productId: string, req: Request, variantId?: string) {
+    const cart = await this._CartRepo.findOne({
+      filter: { user: req.user?.id },
+    });
+
+    if (!cart) {
+      throw new NotFoundException('Cart not found');
+    }
+
+    const isSameItem = (item: any) => {
+      const sameProduct = item.product.toString() === productId.toString();
+
+      const sameVariant = variantId
+        ? item.variantId?.toString() === variantId.toString()
+        : !item.variantId;
+
+      return sameProduct && sameVariant;
+    };
+
+    const itemIndex = cart.items.findIndex(isSameItem);
+
+    if (itemIndex === -1) {
+      throw new NotFoundException('Product not found in cart');
+    }
+
+    cart.items.splice(itemIndex, 1);
+
+    cart.subTotal = cart.items.reduce((sum, item) => sum + item.total, 0);
+
+    await cart.save();
+
     return cart;
   }
-
-  async removeItem(productId: string, req: Request, variantId?: string) {
-  const cart = await this._CartRepo.findOne({
-    filter: { user: req.user?.id },
-  });
-
-  if (!cart) {
-    throw new NotFoundException('Cart not found');
-  }
-
-  const isSameItem = (item: any) => {
-    const sameProduct =
-      item.product.toString() === productId.toString();
-
-    const sameVariant = variantId
-      ? item.variantId?.toString() === variantId.toString()
-      : !item.variantId;
-
-    return sameProduct && sameVariant;
-  };
-
-  const itemIndex = cart.items.findIndex(isSameItem);
-
-  if (itemIndex === -1) {
-    throw new NotFoundException('Product not found in cart');
-  }
-
-  cart.items.splice(itemIndex, 1);
-
-  cart.subTotal = cart.items.reduce((sum, item) => sum + item.total, 0);
-
-  await cart.save();
-
-  return cart;
-}
-
 
   async applayCoupon(req: any, code) {
     const cart = await this.cartExsintance(req);

@@ -80,8 +80,16 @@ export class CategoryService {
     };
   }
 
-  async findAll() {
-    return await this._categoryRepository.find();
+  async findAll(search?: string) {
+    const filter: any = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    return await this._categoryRepository.find({ filter });
   }
 
   async findOne(id: string) {

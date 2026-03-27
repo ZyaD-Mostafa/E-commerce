@@ -1,25 +1,20 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
   Delete,
   UseInterceptors,
-  ValidationPipe,
   UploadedFile,
   UseGuards,
   Req,
-  UploadedFiles,
   Query,
 } from '@nestjs/common';
 import { BrandService } from './brand.service';
-import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
-import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { FileInterceptor } from '@nestjs/platform-express';
+
 import { Types } from 'mongoose';
 import { AuthGuard } from 'src/common/guard/auth.guard';
 import { AccessRoleGuard } from 'src/common/guard/accessRole.guard';
@@ -33,6 +28,7 @@ import { MagicNumberInterceptor } from 'src/common/interceptor/magicNumber.Inter
 import { type Request } from 'express';
 import { brandCredentials } from 'src/common/guard/brandCredentials.guard';
 import { SkipGuard } from 'src/common/decorator/skipBrandCredentail.decorator';
+import { Public } from 'src/common/decorator/public.decorator';
 
 @UseGuards(AuthGuard, AccessRoleGuard, brandCredentials)
 @Roles([UserRoleEnum.VENDOR])
@@ -58,10 +54,9 @@ export class BrandController {
   getMyBrand(@Req() req: Request) {
     return this.brandService.getMyBrand(req);
   }
-
-  @Roles([UserRoleEnum.ADMIN])
+  @Public()
   @Get()
-  findAll(@Query("search") search?: string) {
+  findAll(@Query('search') search?: string) {
     return this.brandService.findAll(search);
   }
 
