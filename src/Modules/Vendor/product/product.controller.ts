@@ -40,7 +40,7 @@ export class ProductController {
 
   @Post()
   @UseInterceptors(
-    FilesInterceptor('files', 5, cloudFileUploadMulter('images')),
+    FilesInterceptor('files', 8, cloudFileUploadMulter('images')),
   )
   create(
     @Body(new ZodPipe(createProductDtoSchema))
@@ -63,6 +63,7 @@ export class ProductController {
     return this.productService.findOne(id);
   }
 
+
   @Patch(':id')
   @UseInterceptors(
     FilesInterceptor('files', 5, cloudFileUploadMulter('images')),
@@ -77,10 +78,6 @@ export class ProductController {
     return this.productService.update(id, updateProductDto, files, req);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productService.remove(id);
-  }
   @Delete('deleteImage/:productId')
   removeImage(
     @Body('public_id') public_id: string[],
@@ -88,5 +85,10 @@ export class ProductController {
     @Param('productId') productId: string,
   ) {
     return this.productService.removeImage(public_id, productId, req);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.productService.remove(id);
   }
 }

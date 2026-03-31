@@ -7,7 +7,7 @@ import { v4 as uuid } from 'uuid';
 
 @Schema({ _id: false }) // مهم عشان متاخدش ObjectId لوحدها
 export class Variant {
-  
+
   @Prop()
   id?: string;
   @Prop({ required: true })
@@ -119,22 +119,31 @@ productSchema.pre('save', async function (next) {
   }
 });
 
-productSchema.pre('save', async function (next) {
+productSchema.pre('save', async function () {
   // ✅ Variant product
-  if (this.variants && this.variants.length > 0) {
-    this.variants.forEach((variant) => {
-      // احسب السعر بعد الخصم
-      variant.salePrice =
-        variant.originalPrice - (variant.originalPrice * (variant.discount || 0)) / 100;
+ if (this.variants && this.variants.length > 0) {
+    this.variants.forEach((variant, index) => {
+      const pricePath = `variants.${index}.originalPrice`;
+      const discountPath = `variants.${index}.discount`;
 
-      // اعطِ UUID فقط إذا لم يكن موجودًا
+      if (
+        this.isModified(pricePath) ||
+        this.isModified(discountPath)
+      ) {
+        variant.salePrice =
+          variant.originalPrice -
+          (variant.originalPrice * (variant.discount || 0)) / 100;
+      }
+
       if (!variant.id) {
         variant.id = uuid();
       }
     });
 
-    return;
+    return
   }
+
+
 
   // ✅ Simple product
   if (this.originalPrice) {
@@ -144,6 +153,8 @@ productSchema.pre('save', async function (next) {
 
   return;
 });
+
+
 export type HProductDocument = HydratedDocument<Product>;
 export const ProductModel = MongooseModule.forFeature([
   { name: Product.name, schema: productSchema },

@@ -86,7 +86,7 @@ export class ProductService {
     id: string,
     updateProductDto: UpdateProductDto,
     files: Express.Multer.File[],
-    req: any,
+    req: Request,
   ) {
     const product = await this.productExist(id);
     if (req.user?._id.toString() !== product.createdBy.toString()) {
@@ -108,16 +108,58 @@ export class ProductService {
     }
 
     product.image = newImage;
-
-    const updatedProduct = await this._prodcutRepo.updateOne({
-      filter: { _id: id },
-      update: {
+    if (!updateProductDto.variantId) {
+      const updateData: any = {
         ...updateProductDto,
-        $inc: { __v: 1 },
         image: newImage,
-      },
-      options: { runValidators: true },
-    });
+        $inc: { __v: 1 },
+      };
+
+      // ✅ حساب السعر للمنتج العادي
+      if (
+        updateProductDto.originalPrice !== undefined ||
+        updateProductDto.discount !== undefined
+      ) {
+        const originalPrice =
+          updateProductDto.originalPrice ?? product.originalPrice;
+
+        const discount = updateProductDto.discount ?? product.discount ?? 0;
+
+        updateData.salePrice =
+          originalPrice && originalPrice > 0
+            ? originalPrice - (originalPrice * discount) / 100
+            : undefined;
+      }
+
+      const result = await this._prodcutRepo.updateOne({
+        filter: { _id: id },
+        update: updateData,
+        options: { runValidators: true },
+      });
+
+      if (result.modifiedCount === 0) {
+        throw new BadRequestException('fail to update');
+      }
+    } else {
+      // Update variant
+      if (!product?.variants || product?.variants.length === 0) {
+        throw new NotFoundException('Product has no variants');
+      }
+      const varints = product?.variants?.find(
+        (variant) => variant.id === updateProductDto.variantId,
+      );
+      if (!varints) {
+        throw new NotFoundException('Variant not found');
+      }
+      if (updateProductDto.name) varints.name = updateProductDto.name;
+      if (updateProductDto.originalPrice)
+        varints.originalPrice = updateProductDto.originalPrice;
+      if (updateProductDto.discount)
+        varints.discount = updateProductDto.discount;
+      if (updateProductDto.stock) varints.stock = updateProductDto.stock;
+
+      await product.save();
+    }
 
     return { message: 'Product updated successfully' };
   }
@@ -137,7 +179,7 @@ export class ProductService {
 
     if (product.createdBy.toString() !== req.user._id.toString()) {
       throw new ForbiddenException(
-        'You are not authorized to delete this product',
+        'You are not authorized to update this product',
       );
     }
     if (!public_id || public_id.length === 0) {
@@ -152,6 +194,7 @@ export class ProductService {
     product.image = product.image.filter(
       (img) => img.public_id && !public_id.includes(img.public_id),
     );
+
     await product.save();
     return {
       message: 'Image deleted successfully',
